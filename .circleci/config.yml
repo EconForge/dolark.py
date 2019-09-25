@@ -45,4 +45,4 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            mkdocs deploy gh-pages
+            mkdocs gh-deploy
