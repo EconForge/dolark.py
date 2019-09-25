@@ -3,6 +3,8 @@ nav:
     - Home: index.md
     - About: about.md
     - Shocks: shocks.md
+    - Equilibrium: equilibrium.md
+    - Perturbation: perturbation.md
 
 markdown_extensions:
   - markdown.extensions.admonition

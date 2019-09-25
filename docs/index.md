@@ -3,7 +3,13 @@
 
 ## Introduction
 
+DolARK is an experimental project to solve heterogenous agents models with infinitely lived agents. It relies on [Dolo](https://EconForge.github.io/dolo/) to model individual agents behavious and extends its modeling language to describe distributions of agents and aggregate dynamics.
 
+We aim to support the following basic cases:
+
+- heterogenous preferences, [no aggregate risk](equilibrium.md)
+- homogenous preferences, [perturbation](perturbation.md) w.r.t. aggregate risk
+- homogenous preferences, dimension reduction of the state-space a la [Krussell-Smith](krussell_smith.md)
 
 ## Frequently Asked Questions
 
