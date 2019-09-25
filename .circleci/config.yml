@@ -37,8 +37,8 @@ jobs:
             nosetests dolark
 
       - add_ssh_keys:
-        fingerprints:
-          - "87:86:f1:57:00:16:bc:a4:d1:60:6b:e9:e2:88:d8:4d"
+          fingerprints:
+            - "87:86:f1:57:00:16:bc:a4:d1:60:6b:e9:e2:88:d8:4d"
 
       - run:
           name: deploy doc
