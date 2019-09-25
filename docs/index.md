@@ -15,3 +15,11 @@ No question was ever asked. It's all very clear.
 
 
 ## Developper Corner
+
+### Contribute to the documentation
+
+pip install mkdocs
+pip install pymdown-extensions
+
+
+Then `mkdocs serve` from within DolARK repository.
