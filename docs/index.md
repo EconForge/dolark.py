@@ -1,4 +1,4 @@
-# DolARK.jl
+# DolARK
 
 
 ## Introduction
