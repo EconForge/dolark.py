@@ -2,6 +2,7 @@ site_name: DolARK
 nav:
     - Home: index.md
     - About: about.md
+    - Shocks: shocks.md
 
 markdown_extensions:
   - markdown.extensions.admonition
