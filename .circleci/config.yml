@@ -26,7 +26,6 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install nose mkdocs
             pip install -e .
 
       - run:
@@ -45,4 +44,6 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
+            pip install nose mkdocs
+            pip install pymdown-extensions
             mkdocs gh-deploy
