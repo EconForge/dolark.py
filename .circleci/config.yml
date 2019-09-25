@@ -32,7 +32,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install nosetests mkdocs
+            pip install nose mkdocs
             pip install -e .
 
       - save_cache:
