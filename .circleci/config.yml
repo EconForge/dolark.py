@@ -49,7 +49,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            python nosetests dolARK
+            nosetests dolARK
 
       - store_artifacts:
           path: test-reports
