@@ -2,3 +2,5 @@ site_name: DolARK
 nav:
     - Home: index.md
     - About: about.md
+markdown_extensions:
+  - admonition
