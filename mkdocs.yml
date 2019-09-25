@@ -5,6 +5,7 @@ nav:
     - Shocks: shocks.md
     - Equilibrium: equilibrium.md
     - Perturbation: perturbation.md
+    - Krussell-Smith: krussell_smith.md
 
 markdown_extensions:
   - markdown.extensions.admonition

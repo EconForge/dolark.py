@@ -1,0 +1,1 @@
+## Time-invariant equilibrium
