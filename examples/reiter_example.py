@@ -103,6 +103,7 @@ plt.tight_layout()
 
 # %%
 # Let's check the effect of the number of discretization points for the exogenous processresults = []
+results = []
 for N in range(2,6):
     print(f"--- Computing model with N={N} ---")
     # discretization_options is passed to the discretize method for idiosyncartic shocks
