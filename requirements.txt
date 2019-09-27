@@ -1,4 +1,5 @@
 -e git+https://github.com/Econforge/dolo.git#egg=dolo
+tqdm
 altair
 jupytext
 matplotlib
