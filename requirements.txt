@@ -1,1 +1,2 @@
+-e git://github.com/Econforge/dolo.git
 altair
