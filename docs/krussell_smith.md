@@ -1,1 +1,1 @@
-## Krussell Smith algorithm
+## Krussell & Smith algorithm

@@ -7,7 +7,7 @@ DolARK is an experimental project to solve heterogenous agents models with infin
 
 We aim to support the following basic cases:
 
-- heterogenous preferences, [no aggregate risk](equilibrium.md)
+- heterogenous preferences, i.i.d. idiosyncratic shocks [no aggregate risk](equilibrium.md)
 - homogenous preferences, [perturbation](perturbation.md) w.r.t. aggregate risk
 - homogenous preferences, dimension reduction of the state-space a la [Krussell-Smith](krussell_smith.md)
 
