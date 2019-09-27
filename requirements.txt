@@ -1,2 +1,2 @@
--e https+git://github.com/Econforge/dolo.git#egg=dolo
+-e git+git://github.com/Econforge/dolo.git#egg=dolo
 altair
