@@ -2,7 +2,7 @@
 
 from distutils.core import setup
 
-setup(name='DolARK',
+setup(name='dolark',
       version='0.0.1',
       description='What is not clear about mixing together Dolo and ARK?',
       author='Pablo Winant',
