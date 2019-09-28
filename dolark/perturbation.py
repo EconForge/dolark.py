@@ -275,6 +275,21 @@ class Equilibrium:
 
         self.states = np.concatenate([e.ravel() for e in (m, μ)])
         self.controls = np.concatenate([e.ravel() for e in (self.x, y)])
+        self.aggmodel = aggmodel
+        
+    def as_df(self):
+        model = self.aggmodel.model
+        eq = self
+        exg = np.column_stack([range(eq.dr.exo_grid.n_nodes()), eq.dr.exo_grid.nodes()])
+        edg = np.column_stack([eq.dr.endo_grid.nodes()])
+        N_m = exg.shape[0]
+        N_s = edg.shape[0]
+        ssg = np.concatenate([exg[:,None,:].repeat(N_s, axis=1), edg[None,:,:].repeat(N_m, axis=0)], axis=2).reshape((N_m*N_s,-1))
+        x = np.concatenate([eq.dr(i, edg) for i in range(eq.dr.exo_grid.n_nodes())], axis=0)
+        import pandas as pd
+        cols = ['i_m'] + model.symbols['exogenous'] + model.symbols['states'] + ['μ'] + model.symbols['controls']
+        df = pd.DataFrame(np.column_stack([ssg, eq.μ.ravel(), x]), columns=cols)
+        return df
 
 class PerturbedEquilibrium:
 

@@ -80,11 +80,24 @@ plt.grid()
 plt.legend(loc='upper right')
 plt.title("Wealth Distribution by Income")
 
+#%%
+# alternative way to plot equilibrium
+import altair as alt
+df = eq.as_df()
+spec = alt.Chart(df).mark_line().encode(
+    x = 'a',
+    y = 'μ',
+    color = 'i_m:N'
+)
+spec
+
 # %%
 # now we compute the perturbation
 peq = aggmodel.perturb(eq)
 
+
 # %%
+# and we simulate given initial value of aggregate shock
 sim = peq.response([0.1])
 
 # %%
@@ -98,8 +111,6 @@ plt.plot( [e[3][0] for e in sim])
 plt.xlabel("t")
 plt.ylabel("k")
 plt.tight_layout()
-
-# %%
 
 # %%
 # Let's check the effect of the number of discretization points for the exogenous processresults = []
