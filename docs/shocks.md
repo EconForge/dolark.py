@@ -1,14 +1,12 @@
 # Shocks
 
-
 The type of exogenous shock associated to a model determines the kind of decision rule, which will be obtained by the solvers. Sho cks can pertain to one of the following categories:
 
 - continuous i.i.d. shocks
 
-- continous autocorrelated process (VAR1 process)
+- continuous auto-correlated process
 
-- discrete
-markov chain.
+- discrete markov chain.
 
 
 Exogenous shock processes are specified in the section `exogenous` of a yaml file.. Dolo accepts various exogenous processes such as normally distributed iid shocks, VAR1 processes, and Markov Chain processes.
@@ -129,59 +127,69 @@ Binomial distribution parameterized by $p$ yields $1$ with probability $p$ and $
 
 ```
 !Bernouilli
-      p: 0.3
+      π: 0.3
 ```   
+### Multivariate distributions
 
-#### Mixtures
+#### Normal (multivariate)
+
+Note the difference with `UNormal`. Parameters `Σ` (not `σ`) and `μ` take a matrix and a vector respectively as argument.
+```
+!Normal:
+      Σ: [[0.0]]
+      μ: [0.1]
+```
+
+
+### Mixtures
 
 For now, mixtures are defined for i.i.d. processes only. They take an integer valued distribution (like the Bernouilli one) and a different distribution associated to each of the values.
 
 ```
 !Mixture
-    index: !Bernouilli
-        p: 0.3
-    distributions:
-        0: UNormal(μ=0.0, σ=0.01)
-        1: UNormal(μ=0.0, σ=0.02)
+index: !Bernouilli
+p: 0.3
+distributions:
+0: UNormal(μ=0.0, σ=0.01)
+1: UNormal(μ=0.0, σ=0.02)
 ```
 
 Mixtures are not restricted to 1d distributions, but all distributions of the mixture must have the same dimension.
 
 !!! note
 
-      Right now, mixtures accept only distributions as values. To switch between constants, one can use a `Constant` distribution as in the following examples.
+Right now, mixtures accept only distributions as values. To switch between constants, one can use a `Constant` distribution as in the following examples.
 
-      ```
-      ...
-      exogenous:
-            e,v: !Mixture:
-                  index: !Bernouilli
-                    p: 0.3
-                  distributions:
-                    0: Constant(μ=[0.1, 0.2])
-                    1: Constant(μ=[0.2, 0.3])
-      ```
+```
+...
+exogenous:
+e,v: !Mixture:
+index: !Bernouilli
+p: 0.3
+distributions:
+0: Constant(μ=[0.1, 0.2])
+1: Constant(μ=[0.2, 0.3])
+```
 
+## Continuous Autoregressive Process
 
-### Autoregressive process
+### AR1 / VAR1
 
-#### VAR(1)
-
-#### AR(1)
-
+For now, `AR1` is an alias for `VAR1`. Autocorrelation `ρ` must be a scalar (otherwise we don't know how to discretize).
 
 ```
 exogenous: !AR1
-    rho: 0.9
-    Sigma: [[σ^2]]
+rho: 0.9
+Sigma: [[σ^2]]
 ```
 
 
-### Markov chains
+
+
+## Markov chains
 
 Markov chains are constructed by providing a list of nodes and a
 transition matrix.
-
 
 ```
 exogenous: !MarkovChain
@@ -190,7 +198,7 @@ exogenous: !MarkovChain
 ```
 
 
-### Product
+## Product
 
 We can also specify more than one process. For instance if we want to combine a VAR1 and an Normal Process we use the tag Product and write:
 
@@ -227,7 +235,7 @@ exogenous: !Product
 
       In this case we define several shocks for several variables (or combinations thereof).
 
-### Conditional processes
+## Conditional processes
 
 Support is very limited for now. It is possible to define markov chains, whose transitions (not the values) depend on the output of another process.
 
