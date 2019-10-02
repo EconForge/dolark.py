@@ -80,7 +80,7 @@ plt.grid()
 plt.legend(loc='upper right')
 plt.title("Wealth Distribution by Income")
 
-#%%
+# %%
 # alternative way to plot equilibrium
 import altair as alt
 df = eq.as_df()

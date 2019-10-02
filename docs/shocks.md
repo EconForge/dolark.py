@@ -1,9 +1,7 @@
 # Shocks
 
 
-The type of exogenous shock associated to a model determines the kind of
-decision rule, which will be obtained by the solvers. Shocks can pertain
-to one of the following categories:
+The type of exogenous shock associated to a model determines the kind of decision rule, which will be obtained by the solvers. Sho cks can pertain to one of the following categories:
 
 - continuous i.i.d. shocks
 
@@ -13,15 +11,13 @@ to one of the following categories:
 markov chain.
 
 
-## Exogenous shocks specification
-
-Exogenous shock processes are specified in the section exogenous . Dolo accepts various exogenous processes such as normally distributed iid shocks, VAR1 processes, and Markov Chain processes.
+Exogenous shock processes are specified in the section `exogenous` of a yaml file.. Dolo accepts various exogenous processes such as normally distributed iid shocks, VAR1 processes, and Markov Chain processes.
 
 Here are some examples for each type of shock:
 
-### IID Univariate
+## IID Distributions
 
-....
+### Univariate distributions
 
 #### IID Normal
 
@@ -35,7 +31,7 @@ $$f(x; \mu, \sigma) = \frac{1}{\sqrt{2 \pi \sigma^2}}
 A normal shock in the yaml file with mean 0.2 and standard deviation 0.1 can be declared as follows
 
 ```
-exogenous: !Normal:
+!Normal:
     σ: 0.1
     μ: 0.2
 ```
@@ -43,34 +39,33 @@ exogenous: !Normal:
 or
 
 ```
-exogenous: !Normal:
+!Normal:
     sigma: 0.1
     mu: 0.2
 ```
 
 !!! note
-    Greek letter 'σ' or 'sigma' (similarly 'μ' or 'mu' ) are accepted, thanks to the greek translation function.
+    Greek letter 'σ' or 'sigma' (similarly 'μ' or 'mu' ) are accepted, thanks to the `greek_tolerance` function.
 
 
+!!! note
 
-The exogenous shock section can refer to parameters specified in the calibration section:
+      When defining shocks in a dolo model, that is in an `exogenous` section, The exogenous shock section can refer to parameters specified in the calibration section:
 
-```   
-symbols:
-      states: [a, b]
-      controls: [c, d]
-      exogenous: [e]
-      parameters: [alpha, beta, mu, sigma]
+      ```   
+      symbols:
+      ...
+            parameters: [alpha, beta, mu, sigma]
+      ...
+      calibration:
+            sigma: 0.01
+            mu: 0.0
 
-.
-.
-.
+      exogenous: !Normal:
+            σ: sigma
+            μ: mu
 
-exogenous: !Normal:
-      σ: sigma
-      μ: mu
-
-```      
+      ```      
 
 #### IID LogNormal
 
@@ -122,11 +117,51 @@ Beta distribution with shape parameters α and β has the following PDF
 $$f(x; \alpha, \beta) = \frac{1}{B(\alpha, \beta)} x^{\alpha - 1} (1 x)^{\beta - 1}, \quad x \in [0, 1]$$
 
 ```
-exogenous: !Beta:
+exogenous: !Beta
       α: 0.3
       β: 0.1
 
 ```    
+
+#### Bernouilli
+
+Binomial distribution parameterized by $p$ yields $1$ with probability $p$ and $0$ with probability $1-p$.
+
+```
+!Bernouilli
+      p: 0.3
+```   
+
+#### Mixtures
+
+For now, mixtures are defined for i.i.d. processes only. They take an integer valued distribution (like the Bernouilli one) and a different distribution associated to each of the values.
+
+```
+!Mixture
+    index: !Bernouilli
+        p: 0.3
+    distributions:
+        0: UNormal(μ=0.0, σ=0.01)
+        1: UNormal(μ=0.0, σ=0.02)
+```
+
+Mixtures are not restricted to 1d distributions, but all distributions of the mixture must have the same dimension.
+
+!!! note
+
+      Right now, mixtures accept only distributions as values. To switch between constants, one can use a `Constant` distribution as in the following examples.
+
+      ```
+      ...
+      exogenous:
+            e,v: !Mixture:
+                  index: !Bernouilli
+                    p: 0.3
+                  distributions:
+                    0: Constant(μ=[0.1, 0.2])
+                    1: Constant(μ=[0.2, 0.3])
+      ```
+
 
 ### Autoregressive process
 
@@ -154,17 +189,6 @@ exogenous: !MarkovChain
     transitions: [[0.9, 0.1], [0.1, 0.9]]
 ```
 
-It is also possible to combine markov chains together.
-
-```yaml
-exogenous: !MarkovTensor:
-    - !MarkovChain
-        values: [[-0.01, 0.1],[0.01, 0.1]]
-        transitions: [[0.9, 0.1], [0.1, 0.9]]
-    - !MarkovChain
-        values: [[-0.01, 0.1],[0.01, 0.1]]
-        transitions: [[0.9, 0.1], [0.1, 0.9]]
-```
 
 ### Product
 
@@ -172,20 +196,74 @@ We can also specify more than one process. For instance if we want to combine a 
 
 ```
 exogenous: !Product
-    p1: !VAR1
+
+    - !VAR1
          rho: 0.75
-         Sigma: [[0.015^2]]
+         Sigma:  [[0.015^2, -0.05], [-0.05, 0.012]]
 
-         N: 3
-
-    p2: !Normal:
+    -  !Normal:
           σ: sigma
           μ: mu
 ```
 
-### Mixtures
+!!! note
 
-...
+      Note that another syntax is accepted, in the specific context of a dolo exogenous section. It keeps the Product operator implicit. Suppose a dolo model has $r,w,e$ as exogenous shocks. It is possible to list several shocks for each variable as in the following example:
+
+      ```
+      symbols:
+            ...
+            exogenous: [r,w,e]
+
+      exogenous:
+          r,w: !VAR1
+               rho: 0.75
+               Sigma: [[0.015^2, -0.05], [-0.05, 0.012]]
+
+          e  !Normal:
+                σ: sigma
+                μ: mu
+      ```
+
+      In this case we define several shocks for several variables (or combinations thereof).
+
+### Conditional processes
+
+Support is very limited for now. It is possible to define markov chains, whose transitions (not the values) depend on the output of another process.
+
+```
+exogenous: !Conditional
+    condition: !UNormal
+        mu: 0.0
+        sigma: 0.2
+    type: Markov
+    arguments: !Function
+        arguments: [x]
+        value:
+          states: [0.1, 0.2]
+          transitions: !Matrix
+              [[1-0.1-x, 0.1+x],
+               [0.5,       0.5]]
+
+```
+
+!!! note
+
+      The plan is to replace the clean and explicit but somewhat tedious syntax above by the following (where dependence is detected automatically):
+
+      ```
+      exogenous:
+          x: !UNormal
+              mu: 0.0
+              sigma: 0.2
+          y: !Markov
+                states: [0.1, 0.2]
+                transitions: !Matrix
+                    [[1-0.1-x, 0.1+x],
+                     [0.5,       0.5]]
+
+      ```
+
 
 ## Discretization methods for continous shocks
 

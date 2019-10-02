@@ -10,6 +10,7 @@ nav:
 markdown_extensions:
   - markdown.extensions.admonition
   - pymdownx.arithmatex
+  - pymdownx.superfences
 
 extra_javascript:
   # other extra java script
