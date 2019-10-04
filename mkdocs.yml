@@ -13,7 +13,9 @@ nav:
 markdown_extensions:
   - markdown.extensions.admonition
   - pymdownx.arithmatex
-  - pymdownx.highlight
+  - pymdownx.highlight:
+      use_pygments: true
+      extend_pygments_lang: [yaml]
   - pymdownx.superfences
 
 extra_css:
