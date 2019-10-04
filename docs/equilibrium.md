@@ -73,11 +73,11 @@ class KrussellSmith(AggregateModel):
 ```
 
 
-Now, a model with idiosyncratic hetorogeneity:
+Now, a model with idiosyncratic heterogeneity:
 
 
 
-```yaml tab=
+```yaml
 symbols:
     exogenous: [z]
     aggregate: [K]

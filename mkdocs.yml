@@ -5,10 +5,10 @@ theme:
 
 nav:
     - Home: index.md
-    - Shocks: shocks.md
     - Equilibrium: equilibrium.md
     - Perturbation: perturbation.md
     - Krussell-Smith: krussell_smith.md
+    - Shocks: shocks.md
 
 markdown_extensions:
   - markdown.extensions.admonition
