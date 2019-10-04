@@ -1,8 +1,8 @@
-# Single-Agent Program
+## Single-Agent Program
 
 Given a vector of aggregate endogenous variables (e.g. wages or interest rates), the program of the single-agent can be solved using traditional methods in computational economics. In DolARK, we use [dolo](https://github.com/EconForge/dolo) to do so. At this point, the only relevant question concerns the proper writing of the YAML file including these aggregate endogenous variables.
 
-## The YAML file
+### The YAML file
 
 To be more specific, the introduction of aggregate endogenous variables amends the YAML file in two ways:
 1. Aggregate endogenous variables are first declared in the `exogenous` subsection of the `symbols` section.
@@ -10,7 +10,7 @@ To be more specific, the introduction of aggregate endogenous variables amends t
 
 The rest of the YAML file writes following the [documentation of dolo](https://dolo.readthedocs.io/en/latest/)
 
-## An Example: Aiyagari (1994)
+### An Example: Aiyagari (1994)
 
 Consider the model proposed by Aiyagari (1994). The economy includes one homogeneous good, which is produced with labor and capital. There exists a continuum of households who inelastically supply labor, receive wage $w$ and face idiosyncratic employment shocks $e$. Households may consume $c$ and save $a$, which yields interests at rate $r$. Households are credit-constrained ; they cannot borrow beyond a cap $\underline{a}$. An household's value function verifies
 
