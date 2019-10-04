@@ -11,7 +11,7 @@ symbols:
 
 
 definitions:
-    c: (1+r)*a+w*exp(e) - i
+    c: (1+r)*a +  w*exp(e) - i
 
 equations:
 

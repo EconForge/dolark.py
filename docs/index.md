@@ -29,3 +29,6 @@ pip install pymdown-extensions
 
 Then `mkdocs serve` from within DolARK repository.
 On a regular basis, latest version is deployed to github pages [pages](http://www.econforge.org/dolARK/) (for now) using `mkdocs gh-deploy`.
+
+Notebooks are written as Python files and can be opened with Jupyter using the
+[jupytext](https://github.com/mwouts/jupytext) extension.

@@ -1,6 +1,6 @@
 # Shocks
 
-The type of exogenous shock associated to a model determines the kind of decision rule, which will be obtained by the solvers. Sho cks can pertain to one of the following categories:
+The type of exogenous shock associated to a model determines the kind of decision rule, which will be obtained by the solvers. Shocks can pertain to one of the following categories:
 
 - continuous i.i.d. shocks
 

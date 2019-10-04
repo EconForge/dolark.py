@@ -66,6 +66,8 @@ aggmodel = KrussellSmith(model, sol0.dr)
 aggmodel # TODO: find a reasonable representation of this object
 
 # %%
+
+# %%
 # We can now solve for the aggregate equilibrium
 eq = aggmodel.find_steady_state()
 eq
@@ -90,6 +92,9 @@ spec = alt.Chart(df).mark_line().encode(
     color = 'i_m:N'
 )
 spec
+
+# %%
+import xarray
 
 # %%
 # now we compute the perturbation

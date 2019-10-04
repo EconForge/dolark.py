@@ -1,7 +1,10 @@
 site_name: DolARK
+
+theme:
+    name: mkdocs
+
 nav:
     - Home: index.md
-    - About: about.md
     - Shocks: shocks.md
     - Equilibrium: equilibrium.md
     - Perturbation: perturbation.md
@@ -10,7 +13,11 @@ nav:
 markdown_extensions:
   - markdown.extensions.admonition
   - pymdownx.arithmatex
+  - pymdownx.highlight
   - pymdownx.superfences
+
+extra_css:
+    - css/extra.css
 
 extra_javascript:
   # other extra java script
