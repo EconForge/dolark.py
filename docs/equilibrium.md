@@ -1,3 +1,7 @@
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@5"></script>
+
 ## Time-invariant equilibrium
 
 Recall the model written in section X. The agents decision depends on the values processes, which
@@ -71,6 +75,14 @@ class KrussellSmith(AggregateModel):
         aggres_0 = np.array( [kd - y0[0] ])
         return aggres_0
 ```
+
+Graphical represenation
+
+
+<div id="view"></div>
+<script>vegaEmbed('#view','../graphs/distrib.json');</script>
+
+## heterogeneity
 
 
 Now, a model with idiosyncratic heterogeneity:

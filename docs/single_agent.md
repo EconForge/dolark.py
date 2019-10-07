@@ -4,7 +4,8 @@ Given a vector of aggregate endogenous variables (e.g. wages or interest rates),
 
 ### The YAML file
 
-To be more specific, the introduction of aggregate endogenous variables amends the YAML file in two ways:
+To be more specific, the introduction of aggregate endogenous variables amends the YAML file in two steps:
+
 1. Aggregate endogenous variables are first declared in the `exogenous` subsection of the `symbols` section.
 2. We then specify an additional `!ConstantProcess` entry in the `exogenous` section to initalize the behavior of aggregate endogenous variables.
 
@@ -14,7 +15,8 @@ The rest of the YAML file writes following the [documentation of dolo](https://d
 
 Consider the model proposed by Aiyagari (1994). The economy includes one homogeneous good, which is produced with labor and capital. There exists a continuum of households who inelastically supply labor, receive wage $w$ and face idiosyncratic employment shocks $e$. Households may consume $c$ and save $a$, which yields interests at rate $r$. Households are credit-constrained ; they cannot borrow beyond a cap $\underline{a}$. An household's value function verifies
 
-$$v_t(k_t) = \max_{c_t} u(c_t) + \beta \mathbb E_t v_{t+1}(k_{t+1})$$
+$v_t(k_t) = \max_{c_t} u(c_t) + \beta \mathbb E_t v_{t+1}(k_{t+1})$
+
 subject to
 $$c_t + a_{t+1} =  (1+r) a_t + e_t w \quad \text{and} \quad a \geq \underline{a}$$
 

@@ -5,6 +5,7 @@ theme:
 
 nav:
     - Home: index.md
+    - Single Agent: single_agent.md
     - Equilibrium: equilibrium.md
     - Perturbation: perturbation.md
     - Krussell-Smith: krussell_smith.md
@@ -24,4 +25,6 @@ extra_css:
 extra_javascript:
   # other extra java script
   - mathjax-config.js
-  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@3
+  - https://cdn.jsdelivr.net/npm/vega-embed@5
