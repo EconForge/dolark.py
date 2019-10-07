@@ -67,21 +67,19 @@ Variables appearing in the agent's program, which are determined by market inter
 
     1. in the `exogenous` subsection of the `symbols` section `r` and `w` are declared as exogenous, and declared *before* the idiosyncratic shocks `e`.
     ```   
-        symbols:
+    symbols:
         ...
-            exogenous: [r,w,e]
-        ...
+        exogenous: [r,w,e]
+    ...
     ```
     2. in the `exogenous` section
     ```
     exogenous:
-    ...
         r,w: !ConstantProcess
             μ: [r, w]
         e: !AR1
             ρ: 0.9
             σ: 0.01
-        ...
     ```
 
 !!! warning
@@ -197,7 +195,7 @@ Consider now a continuum of mass 1, made of agents that are all identical ex-ant
 
     Note the familiarity with the one-agent problem: symbols, calibration of parameters, and definition of exogenous shocks, are defined in exactly the same way.
 
-    It is not necessary to redefine variables that were defined in the agent's program. All these variables are recognized and implicitly indexed. For instance `a`, which was defined in the preceding section, implicitly stands for `a_i`.
+    It is not necessary to redefine variables that were defined in the agent's program. All these variables are recognized and implicitly indexed. For instance `a`, which was defined in the preceding section, implicitly stands for $a_i$.
 
     Also, the equilibrium condition implicitly features an integration over all agents, so that `K=k` is intepreted as:
 
