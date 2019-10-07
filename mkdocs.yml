@@ -14,6 +14,7 @@ nav:
 markdown_extensions:
   - mdx_math
   - markdown.extensions.admonition
+  - pymdownx.details
   - pymdownx.arithmatex
   - pymdownx.highlight:
       use_pygments: true
