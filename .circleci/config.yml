@@ -46,5 +46,5 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install mkdocs
-            pip install pymdown-extensions
+            pip install pymdown-extensions python-markdown-math
             if [ $(git symbolic-ref --short -q HEAD) == master ]; then mkdocs gh-deploy; fi

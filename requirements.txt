@@ -1,5 +1,7 @@
 -e git+https://github.com/Econforge/dolo.git#egg=dolo
 tqdm
+python-markdown-math
 altair
 jupytext
 matplotlib
+pymdown-extensions
