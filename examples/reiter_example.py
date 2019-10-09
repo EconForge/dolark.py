@@ -1,87 +1,49 @@
 # -*- coding: utf-8 -*-
 # %%
-from dolo import *
-from dolark.perturbation import AggregateModel
 from matplotlib import pyplot as plt
 
+# %%
+# Let's import the heterogeneous agents model
+from dolark import HModel
+aggmodel = HModel('ayiagari.yaml')
+aggmodel # TODO: find a reasonable representation of this object
+
 # %% [markdown]
-# First we check that we can solve the one-agent model
+# First we can check whether the one-agent sub-part of it works
 
 # %%
+from dolo import time_iteration
 discretization_options = {"N": 2}
-model = yaml_import('ayiagari.yaml')
+model = aggmodel.model
 mc = model.exogenous.discretize(to='mc', options=[{},discretization_options])
 sol0 = time_iteration(model, details=True, dprocess=mc)
 
-
-# %% [markdown]
-# Now we set set aggregate conditions. For now, this is done with a Python class.
-# Later, this information will be contained, in a specialized yaml file.
-
 # %%
-class KrussellSmith(AggregateModel):
+# TEMP:  we need to supply a projection function, which maps aggregate variables
+# into the exogenous shocks received by idiosyncratic agents.
+# This should be read from the YAML file. For now, we monkey-patch
 
-    symbols = dict(
-        exogenous = ["z"],
-        aggregate = ["K"],
-        parameters = ["A", "alpha", "delta", 'ρ']
-    )
+def projection(self, m: 'n_e', y: "n_y", p: "n_p"):
 
-    calibration_dict = dict(
-        A = 1,
-        alpha = 0.36,
-        delta = 0.025,
-        K = 40,
-        z = 0,
-        ρ = 0.95
-    )
+    from numpy import exp
+    z = m[0]
+    K = y[0]
+    A = [0]
+    alpha = p[1]
+    delta = p[2]
+    N = 1
+    r = alpha*exp(z)*(N/K)**(1-alpha) - delta
+    w = (1-alpha)*exp(z)*(K/N)**(alpha)
+    return {'r': r, "w": w}
 
-    def τ(self, m, p):
-        # exogenous process is assumed to be deterministic
-        ρ = p[3]
-        return m*ρ
-
-    def definitions(self, m: 'n_e', y: "n_y", p: "n_p"):
-        from numpy import exp
-        z = m[0]
-        K = y[0]
-        A = [0]
-        alpha = p[1]
-        delta = p[2]
-        N = 1
-        r = alpha*exp(z)*(N/K)**(1-alpha) - delta
-        w = (1-alpha)*exp(z)*(K/N)**(alpha)
-        return {'r': r, "w": w}
-
-    def 𝒜(self, m0: 'n_e', μ0: "n_m.N" , xx0: "n_m.N.n_x", y0: "n_y", p: "n_p"):
-
-        import numpy as np
-        kd = sum( [float((μ0[i,:]*xx0[i,:,0]).sum()) for i in range(μ0.shape[0])] )
-        aggres_0 = np.array( [kd - y0[0] ])
-        return aggres_0
-
-# %%
-# We create an aggregate model
-aggmodel = KrussellSmith(model, sol0.dr)
-aggmodel # TODO: find a reasonable representation of this object
-
-# %%
+import types
+aggmodel.projection = types.MethodType(projection, aggmodel)
 
 # %%
 # We can now solve for the aggregate equilibrium
+
 eq = aggmodel.find_steady_state()
 eq
-
-# %%
-# alternative way to plot equilibrium
-import altair as alt
-df = eq.as_df()
-spec = alt.Chart(df).mark_line().encode(
-    x = 'a',
-    y = 'μ',
-    color = 'i_m:N'
-)
-spec
 
 # %%
 # lot's look at the aggregate equilibrium
@@ -95,6 +57,18 @@ plt.title("Wealth Distribution by Income")
 
 # %%
 # alternative way to plot equilibrium
+
+import altair as alt
+df = eq.as_df()
+spec = alt.Chart(df).mark_line().encode(
+    x = 'a',
+    y = 'μ',
+    color = 'i_m:N'
+)
+spec
+
+# %%
+# alternative way to plot equilibrium (with some interactivity)
 # TODO: function to generate it automatically.
 
 import altair as alt
@@ -143,31 +117,10 @@ for t, (m,μ,x,y) in enumerate(sim):
     plt.plot(μ.sum(axis=0), color='red', alpha=0.01)
 plt.xlabel('a')
 plt.ylabel('density')
+plt.grid()
 plt.subplot(122)
 plt.plot( [e[3][0] for e in sim])
 plt.xlabel("t")
 plt.ylabel("k")
+plt.grid()
 plt.tight_layout()
-
-# %%
-# Let's check the effect of the number of discretization points for the exogenous processresults = []
-results = []
-for N in range(2,6):
-    print(f"--- Computing model with N={N} ---")
-    # discretization_options is passed to the discretize method for idiosyncartic shocks
-    aggmodel = KrussellSmith(model,  discretization_options={"N":N})
-    eq = aggmodel.find_steady_state()
-    peq = aggmodel.perturb(eq)
-    results.append((aggmodel, eq, peq))
-
-
-# %%
-# Let's see how discretization affects the total distribution
-for i,(aggmodel, eq, pert) in enumerate(results):
-    N = i+2
-    plt.plot( eq.μ.sum(axis=0), label=f"N={N}")
-plt.legend(loc='upper right')
-
-# %%
-
-# %%
