@@ -147,7 +147,7 @@ Consider now a continuum of mass 1, made of agents that are all identical ex-ant
 2. A projection function p(.) whose output *at least* includes the aggregate exogenous process $y_t$
 3. Equilibrium conditions defined by a function $\mathcal{E}$ such that
 
-    $$\int \mathcal{E}\left(e_t^i, s_t, x(e_t^i,s_t), y_t\right) d \mu_t (e^i,s)= 0$$
+    $$\int \mathcal{E}\left(e_t, s_t, x(e_t,s_t), y_t\right) d \mu_t (e,s)= 0$$
 
 where integral is taken over the distribution of agents over all their endogenous and idiosyncratic exogenous states.
 
@@ -180,7 +180,7 @@ where integral is taken over the distribution of agents over all their endogenou
     - $\delta$ is the depreciation rate of capital
     - $A$ is the scale factor of production
     - $\alpha$ is the output elasticity w.r.t capital
-    
+
     The first-order conditions of the firm's program deliver expressions for $r_t$ and $w_t$.
 
     $$
@@ -189,7 +189,7 @@ where integral is taken over the distribution of agents over all their endogenou
     $$
 
     While the YAML file for the single-agent is built as described above, the YAML file for the aggregate part writes as follows if $z_t$ follows a logged AR(1).
-    
+
     ```yaml
     symbols:
         exogenous: [z]
@@ -240,7 +240,11 @@ is heterogenous, and distributed after some distribution. This is done by adding
             b: 0.96
     ```
 
-    The effect of this section will be to instruct dolark to solve for several agents problem for different values of $\beta$ that approximate distribution $\beta$
+    The effect of this section will be to instruct dolark to solve for several agents problem for different values  $\beta^i$ associate with probabilities $\pi^i$ that approximate distribution $\beta$. Denote by $a^{i_\beta}$ and $d\mu^{i_{\beta}}$ the corresponding decision rules and ergodic distributions. The market clearing condition becomes:
+
+
+    $$K_t = \int_{β} dπ(β) \int_{e,s} a^{β}(e,s) dμ^{β}_t(e,s)$$
+
 
 ??? attention
 
