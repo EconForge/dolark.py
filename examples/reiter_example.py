@@ -8,36 +8,22 @@ from dolark import HModel
 aggmodel = HModel('ayiagari.yaml')
 aggmodel # TODO: find a reasonable representation of this object
 
+
 # %% [markdown]
 # First we can check whether the one-agent sub-part of it works
 
-# %%
-from dolo import time_iteration
-discretization_options = {"N": 2}
-model = aggmodel.model
-mc = model.exogenous.discretize(to='mc', options=[{},discretization_options])
-sol0 = time_iteration(model, details=True, dprocess=mc)
+# # %%
+# from dolo import time_iteration
+# discretization_options = {"N": 2}
+# model = aggmodel.model
+# mc = model.exogenous.discretize(to='mc', options=[{},discretization_options])
+# sol0 = time_iteration(model, details=True, dprocess=mc)
 
 # %%
 # TEMP:  we need to supply a projection function, which maps aggregate variables
 # into the exogenous shocks received by idiosyncratic agents.
 # This should be read from the YAML file. For now, we monkey-patch
 
-def projection(self, m: 'n_e', y: "n_y", p: "n_p"):
-
-    from numpy import exp
-    z = m[0]
-    K = y[0]
-    A = [0]
-    alpha = p[1]
-    delta = p[2]
-    N = 1
-    r = alpha*exp(z)*(N/K)**(1-alpha) - delta
-    w = (1-alpha)*exp(z)*(K/N)**(alpha)
-    return {'r': r, "w": w}
-
-import types
-aggmodel.projection = types.MethodType(projection, aggmodel)
 
 # %%
 # We can now solve for the aggregate equilibrium

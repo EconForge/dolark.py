@@ -21,17 +21,22 @@ import altair as alt
 
 model = yaml_import("bfs_2017.yaml")
 
-model.exogenous.processes[0].discretize(to='iid')
-model.exogenous.processes[1].discretize(to='iid')
-iim = model.exogenous.processes[2].discretize(to='iid')
-
-df = pd.DataFrame([[w,x[0]] for w,x in iim.iteritems(0)], columns=['w', 'x'])
-
-alt.Chart(df).mark_bar().encode(x='x', y='w')
 # -
+dis_iids = []
+for i in range(3):
+    dis_iids.append(model.exogenous.processes[i].discretize(to='iid'))
+
+
+df1 = pd.DataFrame([[w,x[0]] for w,x in dis_iids[0].iteritems(0)], columns=['w', 'x'])
+df2 = pd.DataFrame([[w,x[0]] for w,x in dis_iids[1].iteritems(0)], columns=['w', 'x'])
+df3 = pd.DataFrame([[w,x[0]] for w,x in dis_iids[2].iteritems(0)], columns=['w', 'x'])
+
+
+alt.Chart(df2).mark_bar().encode(x='x', y='w')  & alt.Chart(df3).mark_bar().encode(x='x', y='w')
+
 from dolo import time_iteration, improved_time_iteration
-dr = time_iteration(model)
-# # %time dr = improved_time_iteration(model)
+dr = time_iteration(model, maxit=50)
+# %time dr = improved_time_iteration(model, initial_dr=dr, verbose=True)
 
 
 from dolo import tabulate
@@ -52,5 +57,17 @@ g2
 plt.plot(df_μ['m'], df_μ['μ'])
 
 df_μ.dtypes
+
+from dolark import HModel
+
+hmodel = HModel('ayiagari_betadist.yaml')
+
+disb = hmodel.distribution['β'].discretize(N=5)
+
+drs = []
+for w,b in disb.iteritems(0):
+    print(w,b)
+    hmodel.model.set_calibration(beta=b)
+    dr = improved_time_iteration(hmodel.model)
 
 

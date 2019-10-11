@@ -55,7 +55,7 @@ class AggregateModel:
 
     def equilibrium(self, m0: 'vector', y0: 'vector', p, dr0, verbose=False):
 
-        q0 = [*self.projection(m0, y0, p).values()]
+        q0 = self.projection(m0, y0, p)
 
         v0 = np.concatenate([m0, y0, q0])
 
@@ -132,7 +132,7 @@ class AggregateModel:
         x0, y0 = unpack(controls_p, (x_ss, y_ss))
 
 
-        q0 = np.array([*self.projection(m0, y0, p).values()])
+        q0 = self.projection(m0, y0, p)
         exogenous = copy.deepcopy(self.model.exogenous)
         exogenous.processes[0].μ = q0
         mc = exogenous.discretize(to='mc', options=[{},self.discretization_options])
@@ -170,10 +170,10 @@ class AggregateModel:
         x1, y1 = unpack(controls_f, (x_ss, y_ss))
 
 
-        q0 = [*self.projection(m0, y0, p).values()]
+        q0 = projection(m0, y0, p)
         _m0 = np.array(q0)
 
-        q1 = [*self.projection(m1, y1, p).values()]
+        q1 = projection(m1, y1, p)
         _m1 = np.array(q1)
 
 

@@ -56,12 +56,13 @@ name: Ayiagari
 symbols:
     exogenous: [z]
     aggregate: [K]
-    parameters: [A, alpha, delta, ρ]
+    parameters: [A, alpha, delta, N, ρ]
 
 calibration:
     A: 1
     alpha: 0.36
     delta: 0.025
+    N: 1.0
     K: 40
     z: 0
     ρ: 0.95

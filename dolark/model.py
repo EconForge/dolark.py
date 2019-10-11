@@ -19,7 +19,7 @@ class AggregateException(Exception):
 # deriving from AggregateModel is a very bad idea
 class HModel(AggregateModel):
 
-    def __init__(self, fname, i_options={}):
+    def __init__(self, fname, i_options={}, debug=False):
 
         txt = read_file_or_url(fname)
 
@@ -36,7 +36,12 @@ class HModel(AggregateModel):
 
         self.discretization_options = i_options
 
+        # cache for functions
         self.__equilibrium__ = None
+        self.__projection__ = None
+
+        self.debug = debug
+
         self.check()
         self.__set_changed__()
 
@@ -114,6 +119,38 @@ class HModel(AggregateModel):
         else:
             return None
 
+    @property
+    def projection(self): #, m: 'n_e', y: "n_y", p: "n_p"):
+
+        if self.__projection__ is None:
+
+            arguments_ = {
+                # 'e': [(e,0) for e in self.model.symbols['exogenous']],
+                # 's': [(e,0) for e in self.model.symbols['states']],
+                # 'x': [(e,0) for e in self.model.symbols['controls']],
+                'm': [(e,0) for e in self.symbols['exogenous']],
+                'y': [(e,0) for e in self.symbols['aggregate']],
+                'p': self.symbols['parameters']
+            }
+
+            vars = sum( [[e[0] for e in h] for h in [*arguments_.values()][:-1]], [])
+
+            arguments = {k: [dolang.symbolic.stringify_symbol(e) for e in v] for k,v in arguments_.items()}
+
+            preamble = {} # for now
+
+            projdefs = self.data.get('projection', {})
+            pkeys = [*projdefs.keys()]
+            n_p = len(pkeys)
+            equations = [projdefs[v] for v in self.model.symbols['exogenous'][:n_p]]
+            equations = [dolang.stringify(eq, variables=vars) for eq in equations]
+            content = {f'{pkeys[i]}_0': eq for i, eq in enumerate(equations)}
+            fff = FlatFunctionFactory(preamble, content, arguments, 'equilibrium')
+            fun = dolang.function_compiler.make_method_from_factory(fff, debug=self.debug)
+            from dolang.vectorize import standard_function
+            self.__projection__ = standard_function(fun[1], len(equations))
+
+        return self.__projection__
 
 
     @property
@@ -130,7 +167,7 @@ class HModel(AggregateModel):
                 'p': self.symbols['parameters']
             }
 
-            vars = sum( [[e[0] for e in h] for h in arguments_.values()], [])
+            vars = sum( [[e[0] for e in h] for h in [*arguments_.values()][:-1]], [])
 
             arguments = {k: [dolang.symbolic.stringify_symbol(e) for e in v] for k,v in arguments_.items()}
 
@@ -140,8 +177,9 @@ class HModel(AggregateModel):
             equations = [dolang.stringify(eq, variables=vars) for eq in equations]
             content = {f'eq_{i}': eq for i, eq in enumerate(equations)}
             fff = FlatFunctionFactory(preamble, content, arguments, 'equilibrium')
-            fun = dolang.function_compiler.make_method_from_factory(fff)
-            self.__equilibrium__ = fun[1]
+            fun = dolang.function_compiler.make_method_from_factory(fff, debug=self.debug)
+            from dolang.vectorize import standard_function
+            self.__equilibrium__ = standard_function(fun[1], len(equations))
 
         return self.__equilibrium__
 
