@@ -3,7 +3,7 @@ name: Consumption Savings
 symbols:
     states: [a]
     exogenous: [r, w, e]
-    parameters: [beta, B, a_max]
+    parameters: [β, B, a_max]
     controls: [i]
 
 
@@ -13,14 +13,14 @@ definitions:
 equations:
 
     arbitrage:
-        - 1-beta*(1+r(+1))*c/c(+1) | -B <= i <= (1+r)*a+w*exp(e)
+        - 1-β*(1+r(+1))*c/c(+1) | -B <= i <= (1+r)*a+w*exp(e)
 
     transition:
         - a = i(-1)
 
 calibration:
 
-    beta: 0.99
+    β: 0.99
     B: 1e-10
     a_max: 200.
     a: 1
@@ -66,6 +66,11 @@ calibration:
     z: 0
     ρ: 0.95
     σ: 0.025
+
+distribution:
+    β: !Uniform
+        a: 0.98
+        b: 0.99
 
 exogenous: !VAR1
     ρ: 0.9

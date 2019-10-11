@@ -21,7 +21,6 @@ from .dolo_improvements import TrickyMarkovChain
 class AggregateModel:
 
 
-
     def __init__(self, model, dr0=None, discretization_options={}, exo_grid=None, endo_grid=None):
 
 
@@ -53,44 +52,16 @@ class AggregateModel:
         self.dr0 = dr0
         self.discretization_options = discretization_options
 
-    @property
-    def variables(self):
-        if self.__variables__ is None:
-            # we find how to project aggregate variables (m0,y0,q0) into model exogenous variables
-            calibration = self.calibration
-            m0 = calibration['exogenous']
-            y0 = calibration['aggregate']
-            p = calibration['parameters']
-            defs = self.definitions(m0, y0, p)
-            self.__variables__ = self.symbols['exogenous'] + self.symbols['aggregate'] + list(defs.keys())
-        return self.__variables__
-
-    @property
-    def project_indices(self):
-        if self.__project_indices__ is None:
-
-            d_e = self.model.exogenous.processes[0].d
-            agg_exo = self.model.symbols['exogenous'][:d_e]
-            self.__project_indices__ =  [self.variables.index(v) for v in agg_exo]
-        return self.__project_indices__
-
-    @property
-    def calibration(self):
-        d = dict()
-        for sg in self.symbols.keys():
-            d[sg] = np.array([self.calibration_dict[pn] for pn in self.symbols[sg]], dtype=float)
-        return d
 
     def equilibrium(self, m0: 'vector', y0: 'vector', p, dr0, verbose=False):
 
-        q0 = [*self.definitions(m0, y0, p).values()]
+        q0 = [*self.projection(m0, y0, p).values()]
 
         v0 = np.concatenate([m0, y0, q0])
 
-        p_i = self.project_indices
-
         exogenous = copy.deepcopy(self.model.exogenous)
-        exogenous.processes[0].μ = np.array([v0[i] for i in p_i])
+        exogenous.processes[0].μ = np.array(q0)
+
         mc = exogenous.discretize(to='mc', options=[{},self.discretization_options])
 
         sol = improved_time_iteration(self.model, initial_dr=dr0, dp=mc, verbose=verbose)
@@ -128,6 +99,8 @@ class AggregateModel:
 
         if verbose: print("Computing Steady State...", end="")
         fun = lambda u: self.equilibrium(m0, u, p, dr0)[0]
+
+
         solution = scipy.optimize.root(fun, x0=y0)
         if not solution.success:
             if verbose: print(colored("failed", "red"))
@@ -146,7 +119,7 @@ class AggregateModel:
 
         return Equilibrium(self, m_ss, μ_ss, sol_ss.dr, y_ss)
 
-    def g(self, equilibrium, states_p, controls_p, p):
+    def G(self, equilibrium, states_p, controls_p, p):
 
         eq = equilibrium
         m_ss = eq.m
@@ -159,11 +132,9 @@ class AggregateModel:
         x0, y0 = unpack(controls_p, (x_ss, y_ss))
 
 
-        q0 = [*self.definitions(m0, y0, p).values()]
-        v0 = np.concatenate([m0, y0, q0])
-        p_i = self.project_indices
+        q0 = np.array([*self.projection(m0, y0, p).values()])
         exogenous = copy.deepcopy(self.model.exogenous)
-        exogenous.processes[0].μ = np.array([v0[i] for i in p_i])
+        exogenous.processes[0].μ = q0
         mc = exogenous.discretize(to='mc', options=[{},self.discretization_options])
         # that should actually depend on m1
 
@@ -185,7 +156,7 @@ class AggregateModel:
         return pack([m1, μ1])
 
 
-    def f(self, equilibrium, states, controls, states_f, controls_f, p):
+    def F(self, equilibrium, states, controls, states_f, controls_f, p):
 
         eq = equilibrium
         m_ss = eq.m
@@ -199,14 +170,11 @@ class AggregateModel:
         x1, y1 = unpack(controls_f, (x_ss, y_ss))
 
 
-        p_i = self.project_indices
-        q0 = [*self.definitions(m0, y0, p).values()]
-        v0 = np.concatenate([m0, y0, q0])
-        _m0 = np.array([v0[i] for i in p_i])
+        q0 = [*self.projection(m0, y0, p).values()]
+        _m0 = np.array(q0)
 
-        q1 = [*self.definitions(m1, y1, p).values()]
-        v1 = np.concatenate([m1, y1, q1])
-        _m1 = np.array([v1[i] for i in p_i])
+        q1 = [*self.projection(m1, y1, p).values()]
+        _m1 = np.array(q1)
 
 
         exogenous = copy.deepcopy(self.model.exogenous)
@@ -235,8 +203,8 @@ class AggregateModel:
         states_ss = eq.states
         controls_ss = eq.controls
 
-        g = self.g
-        f = self.f
+        g = self.G
+        f = self.F
 
         g_s = jacobian(lambda u: g(eq, u, controls_ss, p), states_ss)
         g_x = jacobian(lambda u: g(eq, states_ss, u, p), controls_ss)
@@ -276,7 +244,7 @@ class Equilibrium:
         self.states = np.concatenate([e.ravel() for e in (m, μ)])
         self.controls = np.concatenate([e.ravel() for e in (self.x, y)])
         self.aggmodel = aggmodel
-        
+
     def as_df(self):
         model = self.aggmodel.model
         eq = self
@@ -300,9 +268,9 @@ class PerturbedEquilibrium:
         self.evs = evs
 
     def response(peq, m0, T=200):
-        
+
         eq = peq.eq
-        
+
         m0 = np.array(m0)
         C = peq.C
         P = peq.P
@@ -321,7 +289,7 @@ class PerturbedEquilibrium:
         # not clear what object to return here:
         vec = np.concatenate([svec, xvec], axis=1)
         return [unpack(vec[t,:], [eq.m, eq.μ, eq.x, eq.y]) for t in range(T+1)]
-        
+
     def simul(self, dz):
 
         C = self.C

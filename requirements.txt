@@ -3,3 +3,4 @@ tqdm
 altair
 jupytext
 matplotlib
+dataclasses
