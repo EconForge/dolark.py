@@ -18,8 +18,9 @@ from dolo import *
 from matplotlib import pyplot as plt
 import pandas as pd
 import altair as alt
+from dolark import HModel
 
-model = yaml_import("bfs_2017.yaml")
+model = HModel("examples/bfs_2017.yaml")
 
 # -
 dis_iids = []
@@ -69,5 +70,3 @@ for w,b in disb.iteritems(0):
     print(w,b)
     hmodel.model.set_calibration(beta=b)
     dr = improved_time_iteration(hmodel.model)
-
-

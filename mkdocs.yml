@@ -5,7 +5,7 @@ theme:
 
 nav:
     - Home: index.md
-    - Model Definition: single_agent.md
+    - Model Definition: model_def.md
     - Equilibrium: equilibrium.md
     - Perturbation: perturbation.md
     - Krussell-Smith: krussell_smith.md

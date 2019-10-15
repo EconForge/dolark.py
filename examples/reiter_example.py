@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+from dolo import groot
+groot('examples')
+
 # %%
 from matplotlib import pyplot as plt
+
+#%%
 
 # %%
 # Let's import the heterogeneous agents model

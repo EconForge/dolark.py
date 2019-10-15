@@ -1,9 +1,10 @@
+name: Consumption Savings
+
 symbols:
     exogenous: [w,r,ʊ,ψ,ξ]
     states: [m]
     controls: [c]
-    parameters: [ρ, β, δ, D, Đ, wbar, rbar, ʊbar, μ_ue, τ, θ, μ_θ, σ_θ, l, val]
-
+    parameters: [ρ, β, δ, D, Đ, wbar, rbar, ʊbar, μ_ue, τ, μ_θ, σ_θ, μ_ψ, σ_ψ, l]
 
 equations:
 
@@ -13,29 +14,27 @@ equations:
     arbitrage:
         - ( β*(c(1)/c)^(-ρ) )*(ψ(1)^(-ρ))*(D+r(1))/Đ - 1 | 0.0<=c<=m
 
-
-
 calibration:
     ρ: 1
     β: 0.99
     δ: 0.025
     D: 1-δ
     Đ: 1-0.00625
+    l: 1/0.9
+
     wbar: 1
     rbar: 0.01 + δ
     ʊbar: 0.07
     μ_ue: 0.15
     τ: 0
-    l: 1/0.9
 
     μ_θ: 1
     σ_θ: 0.010*4
     μ_ψ: 1
     σ_ψ: (0.010*4)/11
 
-    val: (D+r)/Đ
     m: 1.2
-    c: (m*(val-1) + 1 )/val
+    c: (m*(((D+r)/Đ)-1) + 1 )/((D+r)/Đ)
     θ: 1
 
     w : wbar
@@ -51,7 +50,7 @@ exogenous:
     w,r,ʊ: !ConstantProcess
       μ: [wbar, rbar, ʊbar]
 
-    ψ: !LogNormal
+    ψ: !UNormal
       μ: 1
       σ: 0.00004
 
@@ -70,6 +69,46 @@ exogenous:
         #   σ: (((1-τ)*l)^2)*(σ_θ)^2
           ### transformed for μ_e=(1-τ)*l*θ)
 
+distribution:
+    β: !Uniform
+        a: 0.98
+        b: 0.99
+
 options:
     grid: !Cartesian
-        orders: [1000]
+        orders: [100]
+
+
+---
+
+name: Caroll
+
+symbols:
+    exogenous: [Z, Ψ, Ξ]
+    aggregate: [K]
+    parameters: [α, YK, L, l, ʊbar]
+
+calibration:
+    α: 0.36
+    YK: 10.26
+    L: 1
+    l: 1/0.9
+    Z: 1.0
+    Ψ: 1.0
+    Ξ: 1.0
+    K: l*(YK)**(1/(α-1))
+    ʊbar: 0.07
+
+
+
+exogenous: !ConstantProcess
+      μ: [1.0, 1.0, 1.0]
+
+projection:
+    w: (1-α)*Z*(K/(l*L))**(α)
+    r: α*YK
+    ʊ: ʊbar
+
+
+equilibrium:
+    - K = m-c
