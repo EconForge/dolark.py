@@ -102,7 +102,7 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
                             u,
                             dr0=dr0,
                             return_equilibrium=False)
-            return res
+        return res
 
     solution = scipy.optimize.root(fun, x0=y0)
     if not solution.success:

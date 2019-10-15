@@ -39,16 +39,30 @@ eq0 = find_steady_state(hmodel1)
 for j in range(3):
     plt.plot( w*eq0.μ[j,:], label=f"{i}" )
 
+
 #%%
 
 eqss = find_steady_state(hmodel2)
 
+
+
 from matplotlib import pyplot as plt
-plt.plot( eq.μ[0,:] )
 
 for i, (w, eq) in enumerate(eqss):
+    s =eq.dr.endo_grid.nodes()
     for j in range(3):
-        plt.plot( w*eq.μ[j,:], label=f"{i}" )
+        plt.plot(s, w*eq.μ[j,:], label=f"{i}" )
+plt.legend()
+
+# wealth distribution
+bins = []
+for i, (w, eq) in enumerate(eqss):
+    bins.append( w*sum(s.ravel()*eq.μ.sum(axis=0)))
+
+
+plt.plot([e[1]['β'] for e in dist], bins, '-o')
+plt.xlabel('β')
+
 y0 = eqss[0][1].y
 
 #%%
@@ -85,36 +99,16 @@ plt.plot(kvec, kvec-sum(eqs,0)*0.5, linestyle='--', color='black')
 plt.plot(kvec, kvec, color='black')
 
 plt.grid()
-
-eq0.y
-
-# #%%
-
-# m0, y0 = hmodel1.calibration['exogenous','aggregate']
-# equilibrium(hmodel1, m0, y0)
-
-# #%%
-
-# m0, y0 = hmodel2.calibration['exogenous','aggregate']
-# equilibrium(hmodel2, m0, y0)
-
-
-# #%%
-# m0, y0, p0 = hmodel3.calibration['exogenous','aggregate','parameters']
-
-# q0 = hmodel3.projection(m0,y0,p0)
-
-# dr3 = time_iteration(hmodel3.model, verbose=False)
-
-# #%%
-# y0 = np.array([8.0])
-# %time res, (sol, μ0, Π0) = equilibrium(hmodel3, m0, y0, dr0=dr3)
-
-
-
-
-# from dolark.perturbation import Equilibrium, colored
-# import scipy
-
-
 #%%
+
+from dolark.perturbation import perturb
+from dolo import groot
+from dolark import HModel
+from dolark.equilibrium import find_steady_state
+
+groot("examples")
+
+hmodel1 = HModel('ayiagari.yaml')
+print(hmodel1.name)
+eq = find_steady_state(hmodel1)
+perteq = perturb(hmodel1, eq)

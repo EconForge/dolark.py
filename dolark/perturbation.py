@@ -3,7 +3,7 @@ from .dolo_improvements import *
 import scipy.optimize
 
 from matplotlib import pyplot as plt
-from dolo.algos.ergodic import ergodic_distribution, time_iteration, improved_time_iteration
+from dolo.algos import ergodic_distribution, time_iteration, improved_time_iteration
 from numpy import exp
 import copy
 
@@ -40,7 +40,7 @@ def G(hmodel, equilibrium, states_p, controls_p, p):
     dr0.set_values(x0)
 
 
-    exg, edg = hmodel.grids
+    exg, edg = dr0.exo_grid, dr0.endo_grid
     # we should not compute μ here...
     μ0 = μ0.ravel()
     Π0,_ = ergodic_distribution(hmodel.model, dr0, exg, edg, mc)
@@ -68,29 +68,28 @@ def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
     x1, y1 = unpack(controls_f, (x_ss, y_ss))
 
 
-    q0 = projection(m0, y0, p)
-    _m0 = np.array(q0)
+    q0 = hmodel.projection(m0, y0, p)
 
-    q1 = projection(m1, y1, p)
-    _m1 = np.array(q1)
-
+    q1 = hmodel.projection(m1, y1, p)
 
     exogenous = copy.deepcopy(hmodel.model.exogenous)
     _mc = exogenous.processes[1].discretize(to='mc', **hmodel.discretization_options)
-    tmc = TrickyMarkovChain(_m0, _m1, _mc)
+    tmc = TrickyMarkovChain(q0, q1, _mc)
 
 
     dr1 = copy.deepcopy(eq.dr)
     dr1.set_values(x1)
 
-    dr0 = time_iteration(hmodel.model, initial_guess=dr1, verbose=False, maxit=1, dprocess=tmc)
+    dr0 = time_iteration(hmodel.model, dr0=dr1, verbose=False, maxit=1, dprocess=tmc)
     s = dr0.endo_grid.nodes()
     n_m = _mc.n_nodes()
     xx0 = np.concatenate([e[None,:,:] for e in [dr0(i,s) for i in range(n_m)] ], axis=0)
 
     res_0 = xx0-x0
 
-    aggres_0 = hmodel.𝒜(m0, μ0, xx0, y0, p)
+    grids = dr0.exo_grid, dr0.endo_grid
+
+    aggres_0 = hmodel.𝒜(grids, m0, μ0, xx0, y0, p)
 
     return pack([res_0, aggres_0])
 
@@ -101,16 +100,14 @@ def get_derivatives(hmodel, eq):
     states_ss = eq.states
     controls_ss = eq.controls
 
-    g = hmodel.G
-    f = hmodel.F
 
-    g_s = jacobian(lambda u: g(eq, u, controls_ss, p), states_ss)
-    g_x = jacobian(lambda u: g(eq, states_ss, u, p), controls_ss)
+    g_s = jacobian(lambda u: G(hmodel, eq, u, controls_ss, p), states_ss)
+    g_x = jacobian(lambda u: G(hmodel, eq, states_ss, u, p), controls_ss)
     g_e = np.zeros((g_s.shape[0], 1))
-    f_s = jacobian(lambda u: f(eq, u, controls_ss, states_ss, controls_ss, p), states_ss)
-    f_x = jacobian(lambda u: f(eq, states_ss, u, states_ss, controls_ss, p), controls_ss)
-    f_S = jacobian(lambda u: f(eq, states_ss, controls_ss, u, controls_ss, p), states_ss)
-    f_X = jacobian(lambda u: f(eq, states_ss, controls_ss, states_ss, u, p), controls_ss)
+    f_s = jacobian(lambda u: F(hmodel, eq, u, controls_ss, states_ss, controls_ss, p), states_ss)
+    f_x = jacobian(lambda u: F(hmodel, eq, states_ss, u, states_ss, controls_ss, p), controls_ss)
+    f_S = jacobian(lambda u: F(hmodel, eq, states_ss, controls_ss, u, controls_ss, p), states_ss)
+    f_X = jacobian(lambda u: F(hmodel, eq, states_ss, controls_ss, states_ss, u, p), controls_ss)
 
     return g_s, g_x, g_e, f_s, f_x, f_S, f_X
 
@@ -119,7 +116,7 @@ def perturb(hmodel, eq, verbose=True):
     from dolo.algos.perturbation import approximate_1st_order
 
     if verbose: print("Computing Jacobian...", end="")
-    g_s, g_x, g_e, f_s, f_x, f_S, f_X = hmodel.get_derivatives(eq)
+    g_s, g_x, g_e, f_s, f_x, f_S, f_X = get_derivatives(hmodel, eq)
     if verbose: print(colored("done", "green"))
     if verbose: print("Solving Perturbation...", end="")
     C0, evs = approximate_1st_order(g_s, g_x, g_e, f_s, f_x, f_S, f_X)
