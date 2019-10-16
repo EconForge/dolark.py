@@ -2,7 +2,7 @@ import dolo
 
 from dolo.compiler.language import eval_data
 from dolo.compiler.misc import CalibrationDict, calibration_to_vector
-
+from dolo.numeric.processes import Conditional, ProductProcess, IIDProcess
 from dolo.misc.display import read_file_or_url
 import ruamel.yaml as ry
 from dolo.compiler.model import Model
@@ -44,8 +44,8 @@ class HModel:
         self.check()
         self.__set_changed__()
 
-        from dolo.numeric.processes import IIDProcess
-        if dptype is None and isinstance(self.model.exogenous.processes[1], IIDProcess):
+        from dolo.numeric.processes import IIDProcess, ProductProcess
+        if dptype is None and isinstance(self.model.exogenous, ProductProcess) and (self.model.exogenous.processes[1], IIDProcess):
             dptype='iid'
         else:
             dptype='mc'
@@ -68,6 +68,8 @@ class HModel:
         if self.__features__ is None:
             __features__ = {}
             __features__['ex-ante-identical'] = not ('distribution' in self.data)
+            __features__['conditional-processes'] = isinstance(self.model.exogenous, Conditional)
+            __features__['iid-shocks'] = isinstance(self.model.exogenous, ProductProcess) and (False not in [isinstance(e, IIDProcess) for e in self.model.exogenous.processes[1:]])
             self.__features__ = __features__
         return self.__features__
 

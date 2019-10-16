@@ -1,39 +1,42 @@
 # -*- coding: utf-8 -*-
+# %%
 from dolo import groot
 groot('examples')
 
 # %%
 from matplotlib import pyplot as plt
 
-#%%
+# %%
+# here are the three functions we use from dolark
+from dolark import HModel
+from dolark.equilibrium import find_steady_state
+from dolark.perturbation import perturb
 
 # %%
 # Let's import the heterogeneous agents model
-from dolark import HModel
 aggmodel = HModel('ayiagari.yaml')
 aggmodel # TODO: find a reasonable representation of this object
 
 
-# %% [markdown]
-# First we can check whether the one-agent sub-part of it works
-
-# # %%
-# from dolo import time_iteration
-# discretization_options = {"N": 2}
-# model = aggmodel.model
-# mc = model.exogenous.discretize(to='mc', options=[{},discretization_options])
-# sol0 = time_iteration(model, details=True, dprocess=mc)
+# %%
+# see what can be done
+aggmodel.features
 
 # %%
-# TEMP:  we need to supply a projection function, which maps aggregate variables
-# into the exogenous shocks received by idiosyncratic agents.
-# This should be read from the YAML file. For now, we monkey-patch
 
+# %% [markdown]
+# First we can check whether the one-agent sub-part of it works, or whether we will need to find better initial guess.
+
+# %%
+from dolo import time_iteration
+i_opts = {"N": 2} # discretization options, consistent, with current implementation of aggregate perturbation
+model = aggmodel.model
+mc = model.exogenous.discretize(to='mc', options=[{},i_opts])
+sol0 = time_iteration(model, details=True, dprocess=mc)
 
 # %%
 # We can now solve for the aggregate equilibrium
-
-eq = aggmodel.find_steady_state()
+eq = find_steady_state(aggmodel)
 eq
 
 # %%
@@ -95,7 +98,7 @@ import xarray
 
 # %%
 # now we compute the perturbation
-peq = aggmodel.perturb(eq)
+peq = perturb(aggmodel, eq)
 
 
 # %%
@@ -115,3 +118,5 @@ plt.xlabel("t")
 plt.ylabel("k")
 plt.grid()
 plt.tight_layout()
+
+# %%

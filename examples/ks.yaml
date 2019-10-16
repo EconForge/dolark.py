@@ -1,0 +1,108 @@
+name: Consumption Savings
+
+symbols:
+    states: [a]
+    exogenous: [r, w, e]
+    parameters: [beta, B, a_max]
+    controls: [i]
+
+
+definitions:
+    c: (1+r)*a +  w*exp(e) - i
+
+equations:
+
+    arbitrage:
+        - 1-beta*(1+r(+1))*c/c(+1) | -B <= i <= (1+r)*a+w*exp(e)
+
+    transition:
+        - a = i(-1)
+
+calibration:
+
+    beta: 0.99
+    B: 1e-10
+    a_max: 200.
+    a: 1
+    i: a
+    ω: 0.1
+    K: 40
+    alpha: 0.36
+    A: 1
+    N: 1
+    delta: 0.025
+    r: alpha*(N/K)**(1-alpha) - delta
+    w: (1-alpha)*(K/N)**(alpha)
+
+domain:
+    a: [-B, a_max]
+
+exogenous: !Conditional
+        condition:  !ConstantProcess
+            μ: [r, w, ω]
+        type: MarkovChain
+        arguments: !Function
+            arguments: [r,w,ω]
+            value:
+                values: [[0.0], [1.0]]
+                transitions: [
+                   [1-ω, ω],
+                   [0.5, 0.5]
+                ]
+
+# # future: new-style syntax
+# exogenous: 
+#     r, w, ω: !ConstantProcess
+#             μ: [r, w, ω]
+#     e: !MarkovChain
+#         values: [[0.0], [1.0]]
+#         transitions: [
+#             [1-ω, ω], # dependence is detected here
+#             [0.5, 0.5]
+#         ]
+
+# # non-conditional variant
+# exogenous: 
+#     r, w, ω: !ConstantProcess
+#             μ: [r, w, ω]
+#     e: !MarkovChain
+#         values: [[0.0], [1.0]]
+#         transitions: [
+#             [0.9, 0.1], # dependence is detected here
+#             [0.5, 0.5]
+#         ]   
+
+options:
+    grid:
+        !Cartesian
+        orders: [30]
+
+---
+
+name: Krussel-smith
+
+symbols:
+    exogenous: [z]
+    aggregate: [K]
+    parameters: [A, alpha, delta, N, ρ]
+
+calibration:
+    A: 1
+    alpha: 0.36
+    delta: 0.025
+    N: 1.0
+    K: 40
+    z: 0
+    ρ: 0.95
+    σ: 0.025
+
+exogenous: !VAR1
+    ρ: 0.9
+    Σ: [[ 0.02 ]]
+
+projection:
+    r: alpha*exp(z)*(N/K)**(1-alpha) - delta
+    w: (1-alpha)*exp(z)*(K/N)**(alpha)
+
+equilibrium:
+    - K = a
