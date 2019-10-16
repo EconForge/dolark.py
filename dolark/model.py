@@ -29,7 +29,7 @@ class HModel:
 
         model_data, hmodel_data = ry.load_all(txt, Loader=ry.RoundTripLoader)
 
-        self.model = Model(model_data)
+        self.__model__ = Model(model_data)
         self.data = hmodel_data
 
         self.discretization_options = i_options
@@ -51,6 +51,13 @@ class HModel:
             dptype='mc'
         self.dptype = dptype
 
+    @property
+    def agent(self):
+        return self.__model__
+
+    @property
+    def model(self):
+        return self.__model__
 
     def __set_changed__(self):
         # these depend on the calibration
