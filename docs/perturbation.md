@@ -47,9 +47,10 @@ For the sake of clarity, let us exemplify the notations above. Considering the A
 - $e_t^i = \left(y_t,\epsilon_t^i\right)$
 - $m_t = z_t$
 - $\mu_t$ is the joint distribution of agents over $s_t$ and $\epsilon_t^i$ given $m_t$
-    
+
 The transition equation associated with $\tau$ is simply
-$$log(z_t) = \rho log(z_{t-1}) + \sigma \eta_t, \quad \eta_t \sim \mathcal{N}(0,1)$$
+
+$$\log(z_t) = \rho \log(z_{t-1}) + \sigma \eta_t, \quad \eta_t \sim \mathcal{N}(0,1)$$
 
 The equilibrium equations defining $\mathcal{A}$ are
 $$
