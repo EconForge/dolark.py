@@ -22,7 +22,7 @@ calibration:
 
     β: 0.99
     B: 1e-10
-    a_max: 200.
+    a_max: 500. # CDC 20191027: Changed from 200
     a: 1
     i: a
 
@@ -47,7 +47,7 @@ exogenous:
 options:
     grid:
         !Cartesian
-        orders: [30]
+        orders: [75] # CDC 20191027 changed from 30 (75=2.5 * 30)
 
 ---
 
