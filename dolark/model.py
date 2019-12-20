@@ -2,24 +2,22 @@ import dolo
 
 from dolo.compiler.language import eval_data
 from dolo.compiler.misc import CalibrationDict, calibration_to_vector
-
+from dolo.numeric.processes import Conditional, ProductProcess, IIDProcess
 from dolo.misc.display import read_file_or_url
 import ruamel.yaml as ry
 from dolo.compiler.model import Model
-
-from dolark.perturbation import AggregateModel
+from dolo import time_iteration, improved_time_iteration
 
 import dolang
 from dolang.factory import FlatFunctionFactory
-from dolang.symbolic import sanitize
 
 class AggregateException(Exception):
     pass
 
-# deriving from AggregateModel is a very bad idea
-class HModel(AggregateModel):
 
-    def __init__(self, fname, i_options={}):
+class HModel:
+
+    def __init__(self, fname, i_options={}, dptype=None, debug=False):
 
         txt = read_file_or_url(fname)
 
@@ -31,17 +29,35 @@ class HModel(AggregateModel):
 
         model_data, hmodel_data = ry.load_all(txt, Loader=ry.RoundTripLoader)
 
-        self.model = Model(model_data)
+        self.__model__ = Model(model_data)
         self.data = hmodel_data
 
         self.discretization_options = i_options
 
+        # cache for functions
         self.__equilibrium__ = None
+        self.__projection__ = None
+        self.__features__ = None
+
+        self.debug = debug
+
         self.check()
         self.__set_changed__()
 
-        # probably not optimal
-        super().__init__(self.model)
+        from dolo.numeric.processes import IIDProcess, ProductProcess
+        if dptype is None and isinstance(self.model.exogenous, ProductProcess) and (self.model.exogenous.processes[1], IIDProcess):
+            dptype='iid'
+        else:
+            dptype='mc'
+        self.dptype = dptype
+
+    @property
+    def agent(self):
+        return self.__model__
+
+    @property
+    def model(self):
+        return self.__model__
 
     def __set_changed__(self):
         # these depend on the calibration
@@ -50,11 +66,23 @@ class HModel(AggregateModel):
 
     def __get_calibration__(self):
 
-        symbols = self.symbols
         calibration = self.data.get("calibration", {})
         from dolo.compiler.triangular_solver import solve_triangular_system
         return solve_triangular_system(calibration)
 
+    @property
+    def features(self):
+        if self.__features__ is None:
+            __features__ = {}
+            __features__['ex-ante-identical'] = not ('distribution' in self.data)
+            __features__['conditional-processes'] = isinstance(self.model.exogenous, Conditional)
+            __features__['iid-shocks'] = isinstance(self.model.exogenous, ProductProcess) and (False not in [isinstance(e, IIDProcess) for e in self.model.exogenous.processes[1:]])
+            self.__features__ = __features__
+        return self.__features__
+
+    @property
+    def name(self):
+        return self.data.get("name", "unnamed")
 
     def check(self):
 
@@ -114,6 +142,38 @@ class HModel(AggregateModel):
         else:
             return None
 
+    @property
+    def projection(self): #, m: 'n_e', y: "n_y", p: "n_p"):
+
+        if self.__projection__ is None:
+
+            arguments_ = {
+                # 'e': [(e,0) for e in self.model.symbols['exogenous']],
+                # 's': [(e,0) for e in self.model.symbols['states']],
+                # 'x': [(e,0) for e in self.model.symbols['controls']],
+                'm': [(e,0) for e in self.symbols['exogenous']],
+                'y': [(e,0) for e in self.symbols['aggregate']],
+                'p': self.symbols['parameters']
+            }
+
+            vars = sum( [[e[0] for e in h] for h in [*arguments_.values()][:-1]], [])
+
+            arguments = {k: [dolang.symbolic.stringify_symbol(e) for e in v] for k,v in arguments_.items()}
+
+            preamble = {} # for now
+
+            projdefs = self.data.get('projection', {})
+            pkeys = [*projdefs.keys()]
+            n_p = len(pkeys)
+            equations = [projdefs[v] for v in self.model.symbols['exogenous'][:n_p]]
+            equations = [dolang.stringify(eq, variables=vars) for eq in equations]
+            content = {f'{pkeys[i]}_0': eq for i, eq in enumerate(equations)}
+            fff = FlatFunctionFactory(preamble, content, arguments, 'equilibrium')
+            fun = dolang.function_compiler.make_method_from_factory(fff, debug=self.debug)
+            from dolang.vectorize import standard_function
+            self.__projection__ = standard_function(fun[1], len(equations))
+
+        return self.__projection__
 
 
     @property
@@ -130,7 +190,7 @@ class HModel(AggregateModel):
                 'p': self.symbols['parameters']
             }
 
-            vars = sum( [[e[0] for e in h] for h in arguments_.values()], [])
+            vars = sum( [[e[0] for e in h] for h in [*arguments_.values()][:-1]], [])
 
             arguments = {k: [dolang.symbolic.stringify_symbol(e) for e in v] for k,v in arguments_.items()}
 
@@ -140,8 +200,9 @@ class HModel(AggregateModel):
             equations = [dolang.stringify(eq, variables=vars) for eq in equations]
             content = {f'eq_{i}': eq for i, eq in enumerate(equations)}
             fff = FlatFunctionFactory(preamble, content, arguments, 'equilibrium')
-            fun = dolang.function_compiler.make_method_from_factory(fff)
-            self.__equilibrium__ = fun[1]
+            fun = dolang.function_compiler.make_method_from_factory(fff, debug=self.debug)
+            from dolang.vectorize import standard_function
+            self.__equilibrium__ = standard_function(fun[1], len(equations))
 
         return self.__equilibrium__
 
@@ -151,13 +212,32 @@ class HModel(AggregateModel):
         ρ = self.exogenous.rho
         return ρ*m
 
-    def 𝒜(self, m0: 'n_e', μ0: "n_m.N" , xx0: "n_m.N.n_x", y0: "n_y", p: "n_p"):
+    def 𝒜(self, grids, m0: 'n_e', μ0: "n_m.N" , xx0: "n_m.N.n_x", y0: "n_y", p: "n_p"):
 
+        from dolo.numeric.processes import EmptyGrid
         import numpy as np
         μ0 = np.array(μ0)
         ℰ = self.ℰ
-        exg, eng = self.grids
-        mi = exg.nodes()
+        exg, eng = grids
+        if isinstance(exg, EmptyGrid):
+            # this is so sad
+            mi = self.model.calibration['exogenous'][None,:] # not used anyway...
+        else:
+            mi = exg.nodes()
         s = eng.nodes()
         res = sum( [μ0[i,:] @ ℰ(mi[i,:],s,xx0[i,:,:],m0,y0,p) for i in range(xx0.shape[0]) ])
         return res
+
+
+    def get_starting_rule(self, method='improved_time_iteration', **kwargs):
+        # provides initial guess for d.r. by solving agent's problem
+
+        mc = self.model.exogenous.discretize(to='mc', options=[{},self.discretization_options])
+        # dr0 = time_iteration(self.model, dprocess=mc)
+        if method=='improved_time_iteration':
+            sol = improved_time_iteration(self.model, dprocess=mc, **kwargs)
+        elif method=='time_iteration':
+            sol = time_iteration(self.model, dprocess=mc, **kwargs)
+        dr0 = sol.dr
+
+        return dr0

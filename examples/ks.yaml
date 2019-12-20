@@ -25,7 +25,7 @@ calibration:
     a_max: 200.
     a: 1
     i: a
-
+    ω: 0.1
     K: 40
     alpha: 0.36
     A: 1
@@ -37,12 +37,40 @@ calibration:
 domain:
     a: [-B, a_max]
 
-exogenous:
-    r,w: !ConstantProcess
-        μ: [r, w]
-    e: !VAR1
-        ρ: 0.95
-        Σ: [[0.06**2]]
+exogenous: !Conditional
+        condition:  !ConstantProcess
+            μ: [r, w, ω]
+        type: MarkovChain
+        arguments: !Function
+            arguments: [r,w,ω]
+            value:
+                values: [[0.0], [1.0]]
+                transitions: [
+                   [1-ω, ω],
+                   [0.5, 0.5]
+                ]
+
+# # future: new-style syntax
+# exogenous: 
+#     r, w, ω: !ConstantProcess
+#             μ: [r, w, ω]
+#     e: !MarkovChain
+#         values: [[0.0], [1.0]]
+#         transitions: [
+#             [1-ω, ω], # dependence is detected here
+#             [0.5, 0.5]
+#         ]
+
+# # non-conditional variant
+# exogenous: 
+#     r, w, ω: !ConstantProcess
+#             μ: [r, w, ω]
+#     e: !MarkovChain
+#         values: [[0.0], [1.0]]
+#         transitions: [
+#             [0.9, 0.1], # dependence is detected here
+#             [0.5, 0.5]
+#         ]   
 
 options:
     grid:
@@ -51,7 +79,7 @@ options:
 
 ---
 
-name: Ayiagari
+name: Krussel-smith
 
 symbols:
     exogenous: [z]
