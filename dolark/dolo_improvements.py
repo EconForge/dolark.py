@@ -2,6 +2,11 @@ from dolo.numeric.grids import *
 from dolo.numeric.decision_rule import CallableDecisionRule, cat_grids
 import numpy as np
 import tqdm
+from dolo.numeric.misc import cartesian
+
+
+class Vector:
+    pass  # not really used
 
 class Linear:
     pass
@@ -18,6 +23,85 @@ interp_methods = {
     'multilinear': Linear(),
     'chebychev': Chebychev()
 }
+
+
+from dolark.dolo_improvements import *
+from typing import List, Union
+
+functions = {
+    '': [lambda u: u, lambda u: u],
+    'exp': [np.exp, np.log],
+    'log': [np.log, np.exp],
+    'exp(exp)': [lambda x: np.exp(np.exp(x)), lambda x: np.log(np.log(x))],
+    'log(log)': [lambda x: np.log(np.log(x)), lambda x: np.exp(np.exp(x))],
+    'exp(exp(exp))': [lambda x: np.exp(np.exp(np.exp(x))), lambda x: np.log(np.log(np.log(x)))],
+    'log(log(log))': [lambda x: np.log(np.log(np.log(x))), lambda x: np.exp(np.exp(np.exp(x)))]
+}
+
+class WarpGrid(Grid):
+
+    base: Grid
+    warp: List[str]
+
+    def __init__(self, base:Grid, warp: Union[str, List[str]]):
+        if isinstance(warp, str):
+            warp = [str]
+        self.warp = warp
+        self.base = base
+
+        assert(base.d == len(warp))
+
+        self.warp_functions = []
+        self.warp_ifunctions = []
+        for w in self.warp:
+            if w not in functions:
+                raise Exception("Unsupported warp function")
+            else:
+                f, i_f = functions[w]
+                self.warp_functions.append(f)
+                self.warp_ifunctions.append(i_f)
+
+    def nodes(self):
+        nn = self.base.nodes().copy()
+        for i in range(nn.shape[1]):
+            nn[:,i] = self.warp_functions[i](nn[:,i])
+        return nn
+
+    def n_nodes(self):
+        return self.base.n_nodes()
+
+    def node(self, i):
+        nn = self.base.node(i)
+        return np.array([self.warp_functions[i](nn[i]) for i in range(len(self.warp))])
+
+
+class ICartesianGrid(Grid):
+
+    axes: List[Vector]
+
+    def __init__(self, axes: List[Vector]):
+        self.axes = tuple([np.array(e) for e in axes])
+        self.d = len(axes)
+        self.__nodes__ = None
+
+    @property
+    def n(self):
+        return tuple([len(e) for e in self.axes])
+
+    def nodes(self):
+        if self.__nodes__ is None:
+            self.__nodes__ = cartesian(self.axes)
+
+        return self.__nodes__
+
+    def n_nodes(self):
+        return np.prod([len(e) for e in self.axes])
+
+    def node(self, i):
+        # TODO: improve this!
+        return self.nodes()[i,:]
+
+
 
 # we keep the same user-facing-API
 
@@ -180,7 +264,7 @@ def eval_is(itp, exo_grid: CartesianGrid, endo_grid: CartesianGrid, interp_type:
 
 @multimethod
 def get_coefficients(itp, exo_grid: UnstructuredGrid, endo_grid: CartesianGrid, interp_type: Linear, x):
-    return [x[i].copy() for i in range(x.shape[0])]
+    return [x[i].reshape(tuple(endo_grid.n)+(-1,)).copy() for i in range(x.shape[0])]
 
 @multimethod
 def eval_is(itp, exo_grid: UnstructuredGrid, endo_grid: CartesianGrid, interp_type: Linear, i, s):
@@ -196,6 +280,26 @@ def eval_is(itp, exo_grid: UnstructuredGrid, endo_grid: CartesianGrid, interp_ty
     return eval_linear(gg, coeffs, s)
 
 
+
+# UnstructuredGrid x ICartesian x Linear
+
+@multimethod
+def get_coefficients(itp, exo_grid: UnstructuredGrid, endo_grid: ICartesianGrid, interp_type: Linear, x):
+    return [x[i].reshape(tuple(endo_grid.n)+(-1,)).copy() for i in range(x.shape[0])]
+
+@multimethod
+def eval_is(itp, exo_grid: UnstructuredGrid, endo_grid: ICartesianGrid, interp_type: Linear, i, s):
+
+    from interpolation.splines import eval_linear
+    assert(s.ndim==2)
+
+    grid = endo_grid # one single CartesianGrid
+    coeffs = itp.coefficients[i]
+    gg = endo_grid.axes
+
+    return eval_linear(gg, coeffs, s)
+
+
 # UnstructuredGrid x Cartesian x Cubic
 
 @multimethod
@@ -205,7 +309,7 @@ def get_coefficients(itp, exo_grid: UnstructuredGrid, endo_grid: CartesianGrid, 
     d = len(grid.n)
     # this gg could be stored as a member of itp
     gg = tuple( [(grid.min[i], grid.max[i], grid.n[i]) for i in range(d)] )
-    return [prefilter_cubic(gg, x[i]) for i in range(x.shape[0])]
+    return [prefilter_cubic(gg, x[i].reshape(tuple(endo_grid.n)+(-1,))) for i in range(x.shape[0])]
 
 
 @multimethod
@@ -213,13 +317,36 @@ def eval_is(itp, exo_grid: UnstructuredGrid, endo_grid: CartesianGrid, interp_ty
 
     from interpolation.splines import eval_cubic
     assert(s.ndim==2)
-
     grid = endo_grid # one single CartesianGrid
     coeffs = itp.coefficients[i]
     d = len(grid.n)
     gg = tuple( [(grid.min[i], grid.max[i], grid.n[i]) for i in range(d)] )
 
     return eval_cubic(gg, coeffs, s)
+
+
+
+# deal with warped Grids
+@multimethod
+def get_coefficients(itp, exo_grid, endo_grid: WarpGrid, interp_type, x):
+    return get_coefficients(itp, exo_grid, endo_grid.base, interp_type, x)
+
+@multimethod
+def eval_is(itp, exo_grid, endo_grid: WarpGrid, interp_type, i, s):
+    base = endo_grid.base
+    ss = s.copy()
+    for k,f in enumerate(endo_grid.warp_ifunctions):
+        ss[:,k] = f(ss[:,k])
+    return eval_is(itp, exo_grid, base, interp_type, i, ss)
+
+@multimethod
+def eval_ms(itp, exo_grid, endo_grid: WarpGrid, interp_type, m, s):
+    base = endo_grid.base
+    ss = s.copy()
+    for i,f in enumerate(endo_grid.warp_ifunctions):
+        ss[:,i] = f(ss[:,i])
+    return eval_ms(itp, exo_grid, base, interp_type, m, ss)
+
 
 ###### Test
 
