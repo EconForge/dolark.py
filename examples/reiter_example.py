@@ -42,7 +42,7 @@ eq
 # %%
 # lot's look at the aggregate equilibrium
 for i in range(eq.μ.shape[0]):
-    s = eq.dr.endo_grid.nodes() # grid for states (temporary)
+    s = eq.dr.endo_grid.nodes # grid for states (temporary)
     plt.plot(s, eq.μ[i,:]*(eq.μ[i,:].sum()), label=f"y={eq.dr.exo_grid.node(i)[2]: .2f}")
 plt.plot(s, eq.μ.sum(axis=0), label='total', color='black')
 plt.grid()

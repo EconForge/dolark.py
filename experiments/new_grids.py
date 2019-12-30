@@ -6,15 +6,15 @@ wg = WarpGrid(g, ['exp','exp'])
 
 
 from matplotlib import pyplot as plt
-nn = wg.nodes()
+nn = wg.nodes
 
 plt.plot(nn[:,0], nn[:,1],'o')
-for i in range(wg.n_nodes()):
+for i in range(wg.n_nodes):
     nnn = wg.node(i)
     plt.plot(nnn[0], nnn[1], 'x', color='red')
 
 
-nn = wg.nodes()
+nn = wg.nodes
 exo_grid = UnstructuredGrid(np.array([[0.2, 0.5, 0.7]]))
 
 
@@ -26,7 +26,7 @@ vals
 
 
 fg = CartesianGrid([1.0,1.0], [2.7,2.7], [1000,1000])
-no = fg.nodes()
+no = fg.nodes
 tvals = f(no[:,0], no[:,1])
 
 
@@ -35,7 +35,7 @@ tvals = f(no[:,0], no[:,1])
 dr = DecisionRule(exo_grid, wg, 'linear')
 dr.set_values(vals)
 
-s = wg.nodes()
+s = wg.nodes
 x = dr.eval_is(0,s)
 assert( abs(x.ravel() - vals.ravel()).max()<1e-10 )
 
@@ -47,7 +47,7 @@ abs(dr.eval_is(0,no).ravel() - tvals.ravel()).max()
 dr = DecisionRule(exo_grid, wg, 'cubic')
 dr.set_values(vals)
 
-s = wg.nodes()
+s = wg.nodes
 x = dr.eval_is(0,s)
 assert( abs(x.ravel() - vals.ravel()).max()<1e-10 )
 
@@ -59,7 +59,7 @@ abs(dr.eval_is(0,no).ravel() - tvals.ravel()).max()
 
 g = WarpGrid( CartesianGrid([0.0], [1.0], [10]), ['exp'] )
 f = lambda x: np.exp(x[:,0])[:,None]
-nodes = g.nodes()
+nodes = g.nodes
 vals = f(nodes).reshape((1,10,1))
 
 
@@ -68,7 +68,7 @@ dr.set_values(vals)
 
 
 fg = CartesianGrid([0.2], [3.0], [1000])
-nn = fg.nodes()
+nn = fg.nodes
 
 tvals = f(nn)
 xx = dr.eval_is(0, nn)
@@ -86,7 +86,7 @@ plt.grid()
 
 g = WarpGrid( CartesianGrid([-5], [0.5], [10]), ['exp(exp)'] )
 f = lambda x: (x[:,0]**2)[:,None]
-nodes = g.nodes()
+nodes = g.nodes
 vals = f(nodes).reshape((1,10,1))
 
 
@@ -94,7 +94,7 @@ dr = DecisionRule(exo_grid, g, 'linear')
 dr.set_values(vals)
 
 fg = CartesianGrid([0], [2], [1000])
-nn = fg.nodes()
+nn = fg.nodes
 
 tvals = f(nn)
 xx = dr.eval_is(0, nn)
@@ -121,7 +121,7 @@ from dolark.dolo_improvements import ICartesianGrid
 
 g = ICartesianGrid([a])
 f = lambda x: (x[:,0]**2)[:,None]
-nodes = g.nodes()
+nodes = g.nodes
 vals = f(nodes).reshape((1,N,1))
 
 
@@ -129,7 +129,7 @@ dr = DecisionRule(exo_grid, g, 'linear')
 dr.set_values(vals)
 
 fg = CartesianGrid([0], [20], [1000])
-nn = fg.nodes()
+nn = fg.nodes
 
 tvals = f(nn)
 xx = dr.eval_is(0, nn)
@@ -150,7 +150,7 @@ plt.grid()
 
 g = ICartesianGrid([a])
 f = lambda x: (x[:,0]**2)[:,None]
-nodes = g.nodes()
+nodes = g.nodes
 vals = f(nodes).reshape((1,N,1))
 
 
@@ -158,7 +158,7 @@ dr = DecisionRule(exo_grid, g, 'linear')
 dr.set_values(vals)
 
 fg = CartesianGrid([0], [20], [1000])
-nn = fg.nodes()
+nn = fg.nodes
 
 tvals = f(nn)
 xx = dr.eval_is(0, nn)

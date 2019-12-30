@@ -61,14 +61,16 @@ class WarpGrid(Grid):
                 self.warp_functions.append(f)
                 self.warp_ifunctions.append(i_f)
 
+    @property
     def nodes(self):
-        nn = self.base.nodes().copy()
+        nn = self.base.nodes.copy()
         for i in range(nn.shape[1]):
             nn[:,i] = self.warp_functions[i](nn[:,i])
         return nn
 
+    @property
     def n_nodes(self):
-        return self.base.n_nodes()
+        return self.base.n_nodes
 
     def node(self, i):
         nn = self.base.node(i)
@@ -88,18 +90,20 @@ class ICartesianGrid(Grid):
     def n(self):
         return tuple([len(e) for e in self.axes])
 
+    @property
     def nodes(self):
         if self.__nodes__ is None:
             self.__nodes__ = cartesian(self.axes)
 
         return self.__nodes__
 
+    @property
     def n_nodes(self):
         return np.prod([len(e) for e in self.axes])
 
     def node(self, i):
         # TODO: improve this!
-        return self.nodes()[i,:]
+        return self.nodes[i,:]
 
 
 
