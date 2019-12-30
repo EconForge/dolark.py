@@ -81,8 +81,8 @@ def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
     dr1.set_values(x1)
 
     dr0 = time_iteration(hmodel.model, dr0=dr1, verbose=False, maxit=1, dprocess=tmc)
-    s = dr0.endo_grid.nodes()
-    n_m = _mc.n_nodes()
+    s = dr0.endo_grid.nodes
+    n_m = _mc.n_nodes
     xx0 = np.concatenate([e[None,:,:] for e in [dr0(i,s) for i in range(n_m)] ], axis=0)
 
     res_0 = xx0-x0

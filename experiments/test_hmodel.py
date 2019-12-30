@@ -49,7 +49,7 @@ eqss = find_steady_state(hmodel2)
 from matplotlib import pyplot as plt
 
 for i, (w, eq) in enumerate(eqss):
-    s =eq.dr.endo_grid.nodes()
+    s =eq.dr.endo_grid.nodes
     for j in range(3):
         plt.plot(s, w*eq.μ[j,:], label=f"{i}" )
 plt.legend()

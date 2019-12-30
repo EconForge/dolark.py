@@ -55,7 +55,7 @@ dist
 eqs = find_steady_state(hmodel2)
 eqs # results is (for now) a list of equilibrium objects
 
-s = eqs[0][1].dr.endo_grid.nodes().ravel()
+s = eqs[0][1].dr.endo_grid.nodes.ravel()
 i=0
 for (w,eq) in eqs:
     dens = eq.μ.sum(axis=0) # \mu is a 2d array: exogenous x endogenous states
