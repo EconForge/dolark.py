@@ -52,6 +52,26 @@ class DecisionRule(CallableDecisionRule):
     endo_grid: Grid
 
     def __init__(self, exo_grid: Grid, endo_grid: Grid, interp_method='cubic', dprocess=None, values=None):
+        """Initialize a DecisionRule
+
+        Parameters
+        ----------
+        exo_grid : Grid
+        A Grid of all possible values of the exogenously state inputs to
+        the decision rule.
+
+        endo_grid : Grid
+        A Grid of all possible values of the endogenous state inputs to
+        the decision rule.
+
+        interp_method : str
+        An interpolation method for computing intermediary values from
+        the grid points.
+
+        dprocess : TBD
+
+        values : TBD
+        """
 
         if interp_method not in interp_methods.keys():
             raise Exception(f"Unknown interpolation type: {interp_method}. Try one of: {tuple(interp_methods.keys())}")
@@ -95,9 +115,32 @@ class DecisionRule(CallableDecisionRule):
         self.coefficients = self.__get_coefficients__(self, self.exo_grid, self.endo_grid, self.__interp_method__, x)
 
     def eval_ms(self, m, s):
+        """Call the decision rule on specific, non-integral values
+        of the exogenous and endogenous state variables.
+
+        Parameters
+        ----------
+        m : array[float]
+        A vector of continuous values of the exogenous state variables.
+
+        s : array[float]
+        A vector of continuous values of the endogenous state variables.
+        """
         return self.__eval_ms__(self, self.exo_grid, self.endo_grid, self.__interp_method__, m, s)
 
     def eval_is(self, i, s):
+        """Call the decision rule on a specific integral index into
+        the exogenous state variables, and the (continuous, non-integral)
+        endogenous state variables.
+
+        Parameters
+        ----------
+        i : int
+        An integer index into the possible exogenous states.
+
+        s : array[float]
+        A vector of continuous values of the endogenous state variables.
+        """
         return self.__eval_is__(self, self.exo_grid, self.endo_grid, self.__interp_method__, i, s)
 
     def eval_s(self, s):
