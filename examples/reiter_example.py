@@ -23,6 +23,7 @@ aggmodel # TODO: find a reasonable representation of this object
 aggmodel.features
 
 # %%
+aggmodel.agent
 
 # %% [markdown]
 # First we can check whether the one-agent sub-part of it works, or whether we will need to find better initial guess.
@@ -38,6 +39,9 @@ sol0 = time_iteration(model, details=True, dprocess=mc)
 # We can now solve for the aggregate equilibrium
 eq = find_steady_state(aggmodel)
 eq
+
+# %%
+from matplotlib import pyplot as plt
 
 # %%
 # lot's look at the aggregate equilibrium

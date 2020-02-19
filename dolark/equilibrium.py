@@ -24,7 +24,7 @@ class Equilibrium:
     def as_df(self):
         model = self.aggmodel.model
         eq = self
-        exg = np.column_stack([range(eq.dr.exo_grid.n_nodes, eq.dr.exo_grid.nodes])
+        exg = np.column_stack([range(eq.dr.exo_grid.n_nodes, eq.dr.exo_grid.n_nodes)])
         edg = np.column_stack([eq.dr.endo_grid.nodes])
         N_m = exg.shape[0]
         N_s = edg.shape[0]
