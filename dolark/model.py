@@ -223,8 +223,8 @@ class HModel:
             # this is so sad
             mi = self.model.calibration['exogenous'][None,:] # not used anyway...
         else:
-            mi = exg.nodes()
-        s = eng.nodes()
+            mi = exg.nodes
+        s = eng.nodes
         res = sum( [μ0[i,:] @ ℰ(mi[i,:],s,xx0[i,:,:],m0,y0,p) for i in range(xx0.shape[0]) ])
         return res
 
