@@ -5,8 +5,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.2.4
+#       format_version: '1.5'
+#       jupytext_version: 1.3.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -15,6 +15,14 @@
 
 # WARNING: this is not working yet
 
+# + jupyter={"source_hidden": true}
+from dolo import groot
+# -
+
+groot()
+
+pwd
+
 # +
 from dolo import *
 from matplotlib import pyplot as plt
@@ -22,7 +30,7 @@ import pandas as pd
 import altair as alt
 from dolark import HModel
 
-hmodel = HModel("bfs_2017.yaml")
+hmodel = HModel("examples/bfs_2017.yaml")
 hmodel.features
 # -
 hmodel.agent
@@ -43,9 +51,24 @@ alt.Chart(df2, title='Ψ').mark_bar().encode(x='x', y='w')  & alt.Chart(df3, tit
 
 # Agents' decision rule is not correct yet
 
+# +
+
+
+from dolo.numeric.decision_rule import CustomDR
+
+values = {
+    #'c': 'min(m, 1 + 0.05*(m-1))'
+    'c': 'm*0.2'
+}
+
+
+cdr = CustomDR(values, hmodel.agent)
+
+# -
+
 from dolo import time_iteration, improved_time_iteration
-dr = time_iteration(hmodel.agent)
-# # %time dr = improved_time_iteration(hmodel.model, dr0=dr, verbose=True, details=False)
+dr = time_iteration(hmodel.agent, dr0 = cdr, maxit=100)
+# %time dr = improved_time_iteration(hmodel.model, dr0=dr, verbose=True, details=False)
 
 
 from dolo import tabulate
@@ -53,16 +76,19 @@ from dolo import tabulate
 tab = tabulate(hmodel.agent, dr, 'm')
 
 plt.plot(tab['m'], tab['c'])
+#plt.ylim(0,1)
 
 # ergodic distribution (premature)
 
 Π, μ = ergodic_distribution(hmodel.model, dr)
 df_μ = μ.to_dataframe('μ').reset_index()
 
+plt.plot(df_μ['m'], df_μ['μ'])
+
 ch = alt.Chart(tab)
 g1 = ch.mark_line(color='black',strokeDash=[1,1]).encode(x='m', y='m') + \
 ch.mark_line().encode(x='m', y='c')
-g2 = alt.Chart(df_μ).mark_line().encode(x='m:Q', y= 'mu:Q')
+g2 = alt.Chart(df_μ).mark_line().encode(x='m:Q', y= 'μ:Q')
 
 g2
 
@@ -74,5 +100,6 @@ hmodel.agent.calibration['r','w']
 # here are the values projected from market equilibrium, given default level of capital
 m0, y0, p = hmodel.calibration['exogenous','aggregate', 'parameters']
 hmodel.projection(m0, y0, p) # values for r, w, ω (not the same at all)
+# This should give w, r, ʊ
 
 

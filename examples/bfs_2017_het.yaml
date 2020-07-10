@@ -22,7 +22,7 @@ calibration:
     Đ: 1-0.00625
     l: 1/0.9
 
-    wbar: 2.37
+    wbar: 1
     rbar: 0.01 + δ
     ʊbar: 0.07
     μ_ue: 0.15
@@ -44,14 +44,14 @@ calibration:
     ξ : 1
 
 domain:
-    m: [0.1, 20.0]
+    m: [0.1, 10.0]
 
 exogenous:
     w,r,ʊ: !ConstantProcess
       μ: [wbar, rbar, ʊbar]
 
-    ψ: !LogNormal
-      μ: 1.0
+    ψ: !UNormal
+      μ: 1
       σ: 0.00004
 
     ξ: !Mixture
@@ -60,24 +60,18 @@ exogenous:
       distributions:
         0: !ConstantProcess
           μ: [μ_ue]
-          
-#         1: !UNormal
-#          μ: (1-τ)*l
-#          σ: (1-τ)*l*σ_θ
+        1: !UNormal
+          μ: (1-τ)*l
+          σ: (1-τ)*l*σ_θ
 
-        1: !LogNormal
-          μ: (1-τ)*l*μ_θ
-          σ: (((1-τ)*l)**2)*(σ_θ)**2
-          ## transformed for μ_e=(1-τ)*l*θ)
-
-distribution:
-    β: !Uniform
-        a: 0.98
-        b: 0.99
+        # 1: !LogNormal
+        #   μ: (1-τ)*l*μ_θ
+        #   σ: (((1-τ)*l)^2)*(σ_θ)^2
+          ### transformed for μ_e=(1-τ)*l*θ)
 
 options:
     grid: !Cartesian
-        orders: [200]
+        orders: [1000]
 
 
 ---
@@ -87,29 +81,25 @@ name: Caroll
 symbols:
     exogenous: [Z, Ψ, Ξ]
     aggregate: [K]
-    parameters: [α, YK, L, l, ʊbar]
+    parameters: [α, YK, L, l]
 
 calibration:
     α: 0.36
-    YK: 1/10.26
+    YK: 10.26
     L: 1
     l: 1/0.9
     Z: 1.0
     Ψ: 1.0
     Ξ: 1.0
     K: l*(YK)**(1/(α-1))
-    ʊbar: 0.07
-
 
 
 exogenous: !ConstantProcess
       μ: [1.0, 1.0, 1.0]
 
 projection:
-    w: (1-α)*Z*(YK)**(α/(α-1))
     r: α*YK
-    ʊ: ʊbar
-
+    w: (1-α)*Z*(K/(l*L))**(α)
 
 equilibrium:
     - K = m-c

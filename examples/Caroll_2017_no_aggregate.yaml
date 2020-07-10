@@ -1,0 +1,71 @@
+symbols:
+    exogenous: [w,r,ʊ,ψ,ξ]
+    states: [m]
+    controls: [c]
+    parameters: [ρ, β, δ, D, Đ, wbar, rbar, ʊbar, μ_ue, τ, θ, μ_θ, σ_θ, l, val]
+
+
+equations:
+
+    transition:
+        - m = ((D+r)/Đ)*(m(-1)-c(-1))*(1/ψ) + ξ
+
+    arbitrage:
+        - ( β*(c(1)/c)^(-ρ) )*(ψ(1)^(-ρ))*(D+r(1))/Đ - 1 | 0.0<=c<=m
+
+
+
+calibration:
+    ρ: 1
+    β: 0.99
+    δ: 0.025
+    D: 1-δ
+    Đ: 1-0.00625
+    wbar: 1
+    rbar: 0.01 + δ
+    ʊbar: 0.07
+    μ_ue: 0.15
+    τ: 0
+    l: 1/0.9
+
+    μ_θ: 1
+    σ_θ: 0.010*4
+    μ_ψ: 1
+    σ_ψ: (0.010*4)/11
+
+    val: (D+r)/Đ
+    m: 1.2
+    c: (m*(val-1) + 1 )/val
+    θ: 1
+
+    w : wbar
+    r : rbar
+    ʊ : ʊbar
+    ψ : 1
+    ξ : 1
+
+domain:
+    m: [0.1, 10.0]
+
+exogenous:
+    w,r,ʊ: !ConstantProcess
+      μ: [wbar, rbar, ʊbar]
+
+    ψ: !LogNormal
+      μ: 1
+      σ: 0.00004
+
+    ξ: !Mixture
+      index: !Bernouilli
+        π: ʊbar
+      distributions:
+        0: !ConstantProcess
+          μ: [μ_ue]
+        1: !LogNormal
+          μ: (1-τ)*l*μ_θ
+          σ: (((1-τ)*l)^2)*(σ_θ)^2
+          ### transformed for μ_e=(1-τ)*l*θ)
+
+options:
+    grid: !Cartesian
+        orders: [1000]
