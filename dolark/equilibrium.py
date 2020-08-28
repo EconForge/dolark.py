@@ -24,7 +24,7 @@ class Equilibrium:
     def as_df(self):
         model = self.aggmodel.model
         eq = self
-        exg = np.column_stack([range(eq.dr.exo_grid.n_nodes, eq.dr.exo_grid.nodes)])
+        exg = np.column_stack([range(eq.dr.exo_grid.n_nodes), eq.dr.exo_grid.nodes])
         edg = np.column_stack([eq.dr.endo_grid.nodes])
         N_m = exg.shape[0]
         N_s = edg.shape[0]
@@ -111,8 +111,8 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
         if verbose: print(colored("done", "green"))
 
 
-    # grid_m = model.exogenous.discretize(to='mc', options=[{},{'N':N_mc}]).nodes()
-    # grid_s = model.get_grid().nodes()
+    # grid_m = model.exogenous.discretize(to='mc', options=[{},{'N':N_mc}]).nodes
+    # grid_s = model.get_grid().nodes
     #
     y_ss = solution.x # vector of aggregate endogenous variables
     m_ss = m0 # vector fo aggregate exogenous
