@@ -31,8 +31,8 @@ calibration:
     A: 1
     N: 1
     delta: 0.025
-    r: alpha*(N/K)**(1-alpha) - delta
-    w: (1-alpha)*(K/N)**(alpha)
+    r: alpha*(N/K)^(1-alpha) - delta
+    w: (1-alpha)*(K/N)^(alpha)
 
 domain:
     a: [-B, a_max]
@@ -42,7 +42,7 @@ exogenous:
         μ: [r, w]
     e: !VAR1
         ρ: 0.95
-        Σ: [[0.06**2]]
+        Σ: [[0.06^2]]
 
 options:
     grid:
@@ -73,8 +73,8 @@ exogenous: !VAR1
     Σ: [[ 0.02 ]]
 
 projection:
-    r: alpha*exp(z)*(N/K)**(1-alpha) - delta
-    w: (1-alpha)*exp(z)*(K/N)**(alpha)
+    r: alpha*exp(z)*(N/K)^(1-alpha) - delta
+    w: (1-alpha)*exp(z)*(K/N)^(alpha)
 
 equilibrium:
     - K = a

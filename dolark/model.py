@@ -161,12 +161,14 @@ class HModel:
             arguments = {k: [dolang.symbolic.stringify_symbol(e) for e in v] for k,v in arguments_.items()}
 
             preamble = {} # for now
+            from dolang.symbolic import sanitize, stringify
 
             projdefs = self.data.get('projection', {})
             pkeys = [*projdefs.keys()]
             n_p = len(pkeys)
             equations = [projdefs[v] for v in self.model.symbols['exogenous'][:n_p]]
-            equations = [dolang.stringify(eq, variables=vars) for eq in equations]
+            equations = [sanitize(eq, variables=vars) for eq in equations]
+            equations = [stringify(eq) for eq in equations]
             content = {f'{pkeys[i]}_0': eq for i, eq in enumerate(equations)}
             fff = FlatFunctionFactory(preamble, content, arguments, 'equilibrium')
             fun = dolang.function_compiler.make_method_from_factory(fff, debug=self.debug)
@@ -196,8 +198,12 @@ class HModel:
 
             preamble = {} # for now
 
+            from dolang.symbolic import sanitize, stringify
+
             equations = [("{}-({})".format(*(str(eq).split('='))) if '=' in eq else eq) for eq in self.data['equilibrium']]
-            equations = [dolang.stringify(eq, variables=vars) for eq in equations]
+            equations = [sanitize(eq, variables=vars) for eq in equations]
+            equations = [stringify(eq) for eq in equations]
+            
             content = {f'eq_{i}': eq for i, eq in enumerate(equations)}
             fff = FlatFunctionFactory(preamble, content, arguments, 'equilibrium')
             fun = dolang.function_compiler.make_method_from_factory(fff, debug=self.debug)
