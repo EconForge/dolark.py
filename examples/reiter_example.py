@@ -42,7 +42,7 @@ eq
 # %%
 # lot's look at the aggregate equilibrium
 for i in range(eq.μ.shape[0]):
-    s = eq.dr.endo_grid.nodes() # grid for states (temporary)
+    s = eq.dr.endo_grid.nodes # grid for states (temporary)
     plt.plot(s, eq.μ[i,:]*(eq.μ[i,:].sum()), label=f"y={eq.dr.exo_grid.node(i)[2]: .2f}")
 plt.plot(s, eq.μ.sum(axis=0), label='total', color='black')
 plt.grid()
@@ -120,3 +120,23 @@ plt.grid()
 plt.tight_layout()
 
 # %%
+
+# %%
+
+# %%
+g_s, g_x, g_e, f_s, f_x, f_S, f_X = perturb(aggmodel, eq, return_system=True)
+
+# %%
+import shelve
+
+# %%
+sh = shelve.open("save_shelve")
+
+# %%
+sh['g_s'] = g_s
+sh['g_x'] = g_x
+sh['g_e'] = g_e
+sh['f_s'] = f_s
+sh['f_x'] = f_x
+sh['f_S'] = f_S
+sh['f_X'] = f_X

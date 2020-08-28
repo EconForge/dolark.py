@@ -209,7 +209,7 @@ class HModel:
     def τ(self, m, p):
         # exogenous process is assumed to be deterministic
         # TEMP:  works only if exogenous is an AR1
-        ρ = self.exogenous.rho
+        ρ = self.exogenous.ρ
         return ρ*m
 
     def 𝒜(self, grids, m0: 'n_e', μ0: "n_m.N" , xx0: "n_m.N.n_x", y0: "n_y", p: "n_p"):
@@ -223,8 +223,8 @@ class HModel:
             # this is so sad
             mi = self.model.calibration['exogenous'][None,:] # not used anyway...
         else:
-            mi = exg.nodes()
-        s = eng.nodes()
+            mi = exg.nodes
+        s = eng.nodes
         res = sum( [μ0[i,:] @ ℰ(mi[i,:],s,xx0[i,:,:],m0,y0,p) for i in range(xx0.shape[0]) ])
         return res
 

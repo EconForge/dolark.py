@@ -13,7 +13,7 @@ class Equilibrium:
         self.m = m
         self.μ = μ
         self.dr = dr
-        self.x = np.concatenate([e[None,:,:] for e in [dr(i,dr.endo_grid.nodes()) for i in range(max(dr.exo_grid.n_nodes(),1))] ], axis=0)
+        self.x = np.concatenate([e[None,:,:] for e in [dr(i,dr.endo_grid.nodes) for i in range(max(dr.exo_grid.n_nodes,1))] ], axis=0)
         self.y = y
         self.c = dr.coefficients
 
@@ -24,12 +24,12 @@ class Equilibrium:
     def as_df(self):
         model = self.aggmodel.model
         eq = self
-        exg = np.column_stack([range(eq.dr.exo_grid.n_nodes()), eq.dr.exo_grid.nodes()])
-        edg = np.column_stack([eq.dr.endo_grid.nodes()])
+        exg = np.column_stack([range(eq.dr.exo_grid.n_nodes, eq.dr.exo_grid.nodes)])
+        edg = np.column_stack([eq.dr.endo_grid.nodes])
         N_m = exg.shape[0]
         N_s = edg.shape[0]
         ssg = np.concatenate([exg[:,None,:].repeat(N_s, axis=1), edg[None,:,:].repeat(N_m, axis=0)], axis=2).reshape((N_m*N_s,-1))
-        x = np.concatenate([eq.dr(i, edg) for i in range(max(eq.dr.exo_grid.n_nodes(),1))], axis=0)
+        x = np.concatenate([eq.dr(i, edg) for i in range(max(eq.dr.exo_grid.n_nodes,1))], axis=0)
         import pandas as pd
         cols = ['i_m'] + model.symbols['exogenous'] + model.symbols['states'] + ['μ'] + model.symbols['controls']
         df = pd.DataFrame(np.column_stack([ssg, eq.μ.ravel(), x]), columns=cols)
@@ -55,12 +55,12 @@ def equilibrium(hmodel, m0: 'vector', y0: 'vector', p=None, dr0=None, grids=None
 
     Π0, μ0 = ergodic_distribution(hmodel.model, dr, exg, edg, dp)
 
-    s = edg.nodes()
-    if exg.n_nodes()==0:
+    s = edg.nodes
+    if exg.n_nodes==0:
         nn = 1
         μμ0 = μ0.data[None,:]
     else:
-        nn = exg.n_nodes()
+        nn = exg.n_nodes
         μμ0 = μ0.data
 
     xx0 = np.concatenate([e[None,:,:] for e in [dr(i,s) for i in range(nn)] ], axis=0)
