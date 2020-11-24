@@ -7,9 +7,8 @@ license = "BSD-2-Clause"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-#dolo = "^0.4.9.12"
-dolo = {path="../dolo.py"}
-dolang = "^0.0.10"
+dolo = "^0.4.9.13"
+dolang = "^0.0.12"
 numpy = "^1.19.1"
 tqdm = "^4.48.2"
 scipy = "^1.5.2"
