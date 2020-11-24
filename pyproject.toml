@@ -6,7 +6,7 @@ authors = ["Winant Pablo <pablo.winant@gmail.com>"]
 license = "BSD-2-Clause"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 dolo = "^0.4.9.13"
 dolang = "^0.0.12"
 numpy = "^1.19.1"
