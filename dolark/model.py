@@ -1,6 +1,6 @@
 import dolo
 
-from dolo.compiler.language import eval_data
+from dolang.language import eval_data
 from dolo.compiler.misc import CalibrationDict, calibration_to_vector
 from dolo.numeric.processes import Conditional, ProductProcess, IIDProcess
 from dolo.misc.display import read_file_or_url
