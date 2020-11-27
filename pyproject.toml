@@ -6,10 +6,7 @@ authors = ["Winant Pablo <pablo.winant@gmail.com>"]
 license = "BSD-2-Clause"
 
 [tool.poetry.dependencies]
-python = "^3.8"
-#dolo = "^0.4.9.12"
-dolo = {path="../dolo.py"}
-dolang = "^0.0.10"
+python = "^3.7"
 numpy = "^1.19.1"
 tqdm = "^4.48.2"
 scipy = "^1.5.2"
@@ -24,7 +21,9 @@ mkdocs = "^1.1"
 pymdown-extensions = "^7.1"
 python-markdown-math = "^0.6"
 mypy = "^0.782"
-
+flake8 = "^3.8.4"
+black = {version = "^20.8b1", allow-prereleases = true}
+#dolo = { path = "/home/normann/Dropbox/Pablo/dolo.py", develop = true }
 
 
 [build-system]

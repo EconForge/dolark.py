@@ -7,16 +7,16 @@ symbols:
     controls: [i]
 
 
-definitions:
-    c: (1+r)*a +  w*exp(e) - i
+definitions: |
+    c[t]=(1+r[t])*a[t] +  w[t]*exp(e[t]) - i[t]
 
 equations:
 
-    arbitrage:
-        - 1-β*(1+r(+1))*c/c(+1) | -B <= i <= (1+r)*a+w*exp(e)
+    arbitrage: |
+        1-β*(1+r[t+1])*c/c[t+1] ⟂ -B <= i[t] <= (1+r[t])*a[t]+w[t]*exp(e[t])
 
-    transition:
-        - a = i(-1)
+    transition: |
+        a[t] = i[t-1]
 
 calibration:
 
@@ -77,9 +77,9 @@ exogenous: !VAR1
     ρ: 0.9
     Σ: [[ 0.02 ]]
 
-projection:
-    r: alpha*exp(z)*(N/K)**(1-alpha) - delta
-    w: (1-alpha)*exp(z)*(K/N)**(alpha)
+projection: |
+    r[t] = alpha*exp(z[t])*(N/K[t])**(1-alpha) - delta
+    w[t] = (1-alpha)*exp(z[t])*(K[t]/N)**(alpha)
 
-equilibrium:
-    - K = a
+equilibrium: |
+    K[t] = a[t]
