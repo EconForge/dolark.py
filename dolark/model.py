@@ -49,14 +49,14 @@ class HModel:
 
         from dolo.numeric.processes import IIDProcess, ProductProcess
 
-        if (
-            dptype is None
-            and isinstance(self.model.exogenous, ProductProcess)
-            and (self.model.exogenous.processes[1], IIDProcess)
-        ):
-            dptype = "iid"
-        else:
-            dptype = "mc"
+        # if (
+        #     dptype is None
+        #     and isinstance(self.model.exogenous, ProductProcess)
+        #     and (self.model.exogenous.processes[1], IIDProcess)
+        # ):
+        #     dptype = "iid"
+        # else:
+        #     dptype = "mc"
         self.dptype = dptype
 
     @property
@@ -199,9 +199,6 @@ class HModel:
         if self.__projection__ is None:
 
             arguments_ = {
-                # 'e': [(e,0) for e in self.model.symbols['exogenous']],
-                # 's': [(e,0) for e in self.model.symbols['states']],
-                # 'x': [(e,0) for e in self.model.symbols['controls']],
                 "m": [(e, 0) for e in self.symbols["exogenous"]],
                 "y": [(e, 0) for e in self.symbols["aggregate"]],
                 "p": self.symbols["parameters"],
@@ -215,22 +212,25 @@ class HModel:
             }
 
             preamble = {}  # for now
+            
             from dolang.symbolic import sanitize, stringify
+            eqs = parse_string(self.data['projection'], start='assignment_block')
+            eqs = sanitize(eqs, variables=vars) # just to replace (v,) by (v,0) # TODO: remove
+            eqs = stringify(eqs)
 
-            projdefs = self.data.get("projection", {})
-            pkeys = [*projdefs.keys()]
-            n_p = len(pkeys)
-            equations = [projdefs[v] for v in self.model.symbols["exogenous"][:n_p]]
-            equations = [sanitize(eq, variables=vars) for eq in equations]
-            equations = [stringify(eq) for eq in equations]
-            content = {f"{pkeys[i]}_0": eq for i, eq in enumerate(equations)}
+            content = {}
+            for eq in eqs.children:
+                lhs, rhs = eq.children
+                content[str_expression(lhs)] = str_expression(rhs)
+
             fff = FlatFunctionFactory(preamble, content, arguments, "equilibrium")
-            fun = dolang.function_compiler.make_method_from_factory(
+            _, gufun = dolang.function_compiler.make_method_from_factory(
                 fff, debug=self.debug
             )
+
             from dolang.vectorize import standard_function
 
-            self.__projection__ = standard_function(fun[1], len(equations))
+            self.__projection__ = standard_function(gufun, len(content))
 
         return self.__projection__
 
@@ -259,21 +259,21 @@ class HModel:
 
             from dolang.symbolic import sanitize, stringify
 
-            equations = [
-                ("{}-({})".format(*(str(eq).split("="))) if "=" in eq else eq)
-                for eq in self.data["equilibrium"]
-            ]
-            equations = [sanitize(eq, variables=vars) for eq in equations]
-            equations = [stringify(eq) for eq in equations]
+            eqs = parse_string(self.data['equilibrium'], start="equation_block")
+            eqs = sanitize(eqs, variables=vars) 
+            eqs = stringify(eqs)
+            content = {}
+            for i, eq in enumerate(eqs.children):
+                lhs, rhs = eq.children
+                content[f"eq_{i}"] = "({1})-({0})".format(str_expression(lhs),str_expression(rhs))
 
-            content = {f"eq_{i}": eq for i, eq in enumerate(equations)}
             fff = FlatFunctionFactory(preamble, content, arguments, "equilibrium")
-            fun = dolang.function_compiler.make_method_from_factory(
+            _, gufun = dolang.function_compiler.make_method_from_factory(
                 fff, debug=self.debug
             )
             from dolang.vectorize import standard_function
 
-            self.__equilibrium__ = standard_function(fun[1], len(equations))
+            self.__equilibrium__ = standard_function(gufun, len(content))
 
         return self.__equilibrium__
 

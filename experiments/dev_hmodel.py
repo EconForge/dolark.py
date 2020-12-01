@@ -1,11 +1,3 @@
-from dolo.numeric.distribution import *
-from dolo.numeric.processes import *
-distr = Mixture(index=Bernouilli(π=0.5), distributions={0: ConstantProcess(μ=0.5), 1: UNormal(σ=1.,μ=0.)})
-distr.discretize()
-
-
-
-
 import numpy as np
 import copy
 import scipy
@@ -15,21 +7,10 @@ from dolo import time_iteration, improved_time_iteration
 from dolo import groot
 groot('examples')
 
-# Let's import the heterogeneous agents model
 from dolark import HModel
-
-hmodel = HModel('bfs_2017.yaml')
-hmodel.calibration
-hmodel.get_starting_rule()
-
-hmodel.model.exogenous.processes[0].discretize(to="iid")
-hmodel.model.exogenous.processes[1].discretize(to="iid")
-hmodel.model.exogenous.processes[2].discretize(to="iid")
 
 hmodel1 = HModel('ayiagari.yaml')
 print(hmodel1.name)
-
-
 
 hmodel2 = HModel('ayiagari_betadist.yaml')
 print(hmodel2.name)

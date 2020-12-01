@@ -1,6 +1,6 @@
 ## Next steps for Dolo/Dolark
 
-Overall focus is to reach a stable usable version of Dolo (aka known as 0.5) and an early version of Dolark with clean, working examples.
+Overall focus is to reach a stable usable version of Dolo (aka known as 0.5) and an early version of Dolark with clean, working examples...
 
 ### YAML specification:
 - test specification introduced so far
