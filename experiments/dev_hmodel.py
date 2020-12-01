@@ -1,3 +1,11 @@
+from dolo.numeric.distribution import *
+from dolo.numeric.processes import *
+distr = Mixture(index=Bernouilli(π=0.5), distributions={0: ConstantProcess(μ=0.5), 1: UNormal(σ=1.,μ=0.)})
+distr.discretize()
+
+
+
+
 import numpy as np
 import copy
 import scipy
@@ -10,23 +18,24 @@ groot('examples')
 # Let's import the heterogeneous agents model
 from dolark import HModel
 
+hmodel = HModel('bfs_2017.yaml')
+hmodel.calibration
+hmodel.get_starting_rule()
+
+hmodel.model.exogenous.processes[0].discretize(to="iid")
+hmodel.model.exogenous.processes[1].discretize(to="iid")
+hmodel.model.exogenous.processes[2].discretize(to="iid")
+
 hmodel1 = HModel('ayiagari.yaml')
 print(hmodel1.name)
+
+
 
 hmodel2 = HModel('ayiagari_betadist.yaml')
 print(hmodel2.name)
 
-# hmodel3 = HModel('bfs_2017.yaml')
-# print(hmodel3.name)
-
-#%%
-
-
-#%%
-
-
-
-#%%
+hmodel3 = HModel('bfs_2017.yaml')
+print(hmodel3.name)
 
 # dr0 = hmodel2.get_starting_rule()
 # m0, y0 = hmodel2.calibration['exogenous','aggregate']
@@ -39,6 +48,9 @@ eq0 = find_steady_state(hmodel1)
 for j in range(3):
     plt.plot( w*eq0.μ[j,:], label=f"{i}" )
 
+# %%
+hmodel = HModel('bfs_2017.yaml')
+hmodel.calibration
 
 #%%
 
@@ -112,3 +124,4 @@ hmodel1 = HModel('ayiagari.yaml')
 print(hmodel1.name)
 eq = find_steady_state(hmodel1)
 perteq = perturb(hmodel1, eq)
+

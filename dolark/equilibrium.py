@@ -37,7 +37,6 @@ class Equilibrium:
 
 
 def equilibrium(hmodel, m0: 'vector', y0: 'vector', p=None, dr0=None, grids=None, verbose=False, return_equilibrium=True):
-
     if p is None:
         p = hmodel.calibration['parameters']
 
@@ -75,7 +74,7 @@ def equilibrium(hmodel, m0: 'vector', y0: 'vector', p=None, dr0=None, grids=None
 
 def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
 
-    m0 = hmodel.calibration['exogenous']
+    m0 = hmodel.agent.calibration['exogenous']
     y0 = hmodel.calibration['aggregate']
     p = hmodel.calibration['parameters']
 

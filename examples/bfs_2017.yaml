@@ -8,11 +8,11 @@ symbols:
 
 equations:
 
-    transition:
-        - m = ((D+r)/Đ)*(m(-1)-c(-1))*(1/ψ) + ξ
+    transition: |
+        m[t] = ((D+r[t])/Đ)*(m[t-1]-c[t-1])*(1/ψ[t]) + ξ[t]
 
-    arbitrage:
-        - ( β*(c(1)/c)^(-ρ) )*(ψ(1)^(-ρ))*(D+r(1))/Đ - 1 | 0.0<=c<=m
+    arbitrage: |
+        ( β*(c[t+1]/c[t])^(-ρ) )*((ψ[t+1])^(-ρ))*(D+r[t+1])/Đ - 1 | 0.0<=c[t]<=m[t]
 
 calibration:
     ρ: 1
@@ -104,11 +104,11 @@ calibration:
 exogenous: !ConstantProcess
       μ: [1.0, 1.0, 1.0]
 
-projection:
-    w: (1-α)*Z*(K/(l*L))**(α)
-    r: α*YK
-    ʊ: ʊbar
+projection: |
+    w[t] = (1-α)*Z[t]*(K[t]/(l*L))**(α)
+    r[t] = α*YK
+    ʊ[t] = ʊbar
 
 
-equilibrium:
-    - K = m-c
+equilibrium: |
+    K[t] = m[t]-c[t]
