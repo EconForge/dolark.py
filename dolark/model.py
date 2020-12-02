@@ -73,14 +73,14 @@ class HModel:
         self.__calibration__ = None
 
     def get_calibration(self):
-        
+
         from dolang.symbolic import remove_timing
 
         import copy
 
         calibration = dict()
-        for k,v in self.data.get("calibration", {}).items():
-            if v.tag=='tag:yaml.org,2002:str':
+        for k, v in self.data.get("calibration", {}).items():
+            if v.tag == "tag:yaml.org,2002:str":
 
                 expr = parse_string(v)
                 expr = remove_timing(expr)
@@ -155,13 +155,12 @@ class HModel:
             from dolang.symbolic import remove_timing, parse_string, str_expression
 
             symbols = LoosyDict(equivalences=equivalent_symbols)
-            for sg in self.data['symbols'].keys():
-                symbols[sg] =  [s.value for s in self.data['symbols'][sg]]
+            for sg in self.data["symbols"].keys():
+                symbols[sg] = [s.value for s in self.data["symbols"][sg]]
 
             self.__symbols__ = symbols
 
-        return self.__symbols__     
-
+        return self.__symbols__
 
     @property
     def variables(self):
@@ -172,6 +171,7 @@ class HModel:
         if self.__calibration__ is None:
             calibration_dict = self.get_calibration()
             from dolo.compiler.misc import CalibrationDict, calibration_to_vector
+
             calib = calibration_to_vector(self.symbols, calibration_dict)
             self.__calibration__ = CalibrationDict(self.symbols, calib)  #
         return self.__calibration__

@@ -1,3 +1,16 @@
+<<<<<<< HEAD:experiments/dev_hmodel.py
+=======
+from dolo.numeric.distribution import *
+from dolo.numeric.processes import *
+
+distr = Mixture(
+    index=Bernouilli(π=0.5),
+    distributions={0: ConstantProcess(μ=0.5), 1: UNormal(σ=1.0, μ=0.0)},
+)
+distr.discretize()
+
+
+>>>>>>> master:experiments/test_hmodel.py
 import numpy as np
 import copy
 import scipy
@@ -10,18 +23,10 @@ groot("examples")
 
 from dolark import HModel
 
-<<<<<<< HEAD:experiments/dev_hmodel.py
 hmodel1 = HModel("ayiagari.yaml")
 print(hmodel1.name)
 
-
 hmodel2 = HModel("ayiagari_betadist.yaml")
-=======
-hmodel1 = HModel('ayiagari.yaml')
-print(hmodel1.name)
-
-hmodel2 = HModel('ayiagari_betadist.yaml')
->>>>>>> 38bda6f09f77611f0b6b743ae8bf7ee738ace9af:experiments/test_hmodel.py
 print(hmodel2.name)
 
 hmodel3 = HModel("bfs_2017.yaml")

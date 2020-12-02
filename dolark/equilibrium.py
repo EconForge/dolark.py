@@ -7,13 +7,22 @@ from dolo import improved_time_iteration, time_iteration, ergodic_distribution
 
 from .shocks import discretize_idiosyncratic_shocks
 
-class Equilibrium:
 
+class Equilibrium:
     def __init__(self, aggmodel, m, μ, dr, y):
         self.m = m
         self.μ = μ
         self.dr = dr
-        self.x = np.concatenate([e[None,:,:] for e in [dr(i,dr.endo_grid.nodes) for i in range(max(dr.exo_grid.n_nodes,1))] ], axis=0)
+        self.x = np.concatenate(
+            [
+                e[None, :, :]
+                for e in [
+                    dr(i, dr.endo_grid.nodes)
+                    for i in range(max(dr.exo_grid.n_nodes, 1))
+                ]
+            ],
+            axis=0,
+        )
         self.y = y
         self.c = dr.coefficients
 
@@ -28,17 +37,38 @@ class Equilibrium:
         edg = np.column_stack([eq.dr.endo_grid.nodes])
         N_m = exg.shape[0]
         N_s = edg.shape[0]
-        ssg = np.concatenate([exg[:,None,:].repeat(N_s, axis=1), edg[None,:,:].repeat(N_m, axis=0)], axis=2).reshape((N_m*N_s,-1))
-        x = np.concatenate([eq.dr(i, edg) for i in range(max(eq.dr.exo_grid.n_nodes,1))], axis=0)
+        ssg = np.concatenate(
+            [exg[:, None, :].repeat(N_s, axis=1), edg[None, :, :].repeat(N_m, axis=0)],
+            axis=2,
+        ).reshape((N_m * N_s, -1))
+        x = np.concatenate(
+            [eq.dr(i, edg) for i in range(max(eq.dr.exo_grid.n_nodes, 1))], axis=0
+        )
         import pandas as pd
-        cols = ['i_m'] + model.symbols['exogenous'] + model.symbols['states'] + ['μ'] + model.symbols['controls']
+
+        cols = (
+            ["i_m"]
+            + model.symbols["exogenous"]
+            + model.symbols["states"]
+            + ["μ"]
+            + model.symbols["controls"]
+        )
         df = pd.DataFrame(np.column_stack([ssg, eq.μ.ravel(), x]), columns=cols)
         return df
 
 
-def equilibrium(hmodel, m0: 'vector', y0: 'vector', p=None, dr0=None, grids=None, verbose=False, return_equilibrium=True):
+def equilibrium(
+    hmodel,
+    m0: "vector",
+    y0: "vector",
+    p=None,
+    dr0=None,
+    grids=None,
+    verbose=False,
+    return_equilibrium=True,
+):
     if p is None:
-        p = hmodel.calibration['parameters']
+        p = hmodel.calibration["parameters"]
 
     q0 = hmodel.projection(m0, y0, p)
 
@@ -55,14 +85,14 @@ def equilibrium(hmodel, m0: 'vector', y0: 'vector', p=None, dr0=None, grids=None
     Π0, μ0 = ergodic_distribution(hmodel.model, dr, exg, edg, dp)
 
     s = edg.nodes
-    if exg.n_nodes==0:
+    if exg.n_nodes == 0:
         nn = 1
-        μμ0 = μ0.data[None,:]
+        μμ0 = μ0.data[None, :]
     else:
         nn = exg.n_nodes
         μμ0 = μ0.data
 
-    xx0 = np.concatenate([e[None,:,:] for e in [dr(i,s) for i in range(nn)] ], axis=0)
+    xx0 = np.concatenate([e[None, :, :] for e in [dr(i, s) for i in range(nn)]], axis=0)
 
     res = hmodel.𝒜(grids, m0, μμ0, xx0, y0, p)
 
@@ -74,51 +104,59 @@ def equilibrium(hmodel, m0: 'vector', y0: 'vector', p=None, dr0=None, grids=None
 
 def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
 
+<<<<<<< HEAD
     m0 = hmodel.calibration['exogenous']
     y0 = hmodel.calibration['aggregate']
     p = hmodel.calibration['parameters']
+=======
+    m0 = hmodel.agent.calibration["exogenous"]
+    y0 = hmodel.calibration["aggregate"]
+    p = hmodel.calibration["parameters"]
+>>>>>>> master
 
     if dr0 is None:
-        if verbose: print("Computing Initial Initial Rule... ", end="")
+        if verbose:
+            print("Computing Initial Initial Rule... ", end="")
         dr0 = hmodel.get_starting_rule()
-        if verbose: print(colored("done", "green"))
+        if verbose:
+            print(colored("done", "green"))
 
-    if verbose: print("Computing Steady State...", end="")
+    if verbose:
+        print("Computing Steady State...", end="")
 
     if distribs is None:
         dist = [(1.0, {})]
-        if not hmodel.features['ex-ante-identical']:
+        if not hmodel.features["ex-ante-identical"]:
             dist = distribs = discretize_idiosyncratic_shocks(hmodel.distribution)
     else:
         dist = distribs
 
     def fun(u):
-        res = y0*0
+        res = y0 * 0
         for w, kwargs in dist:
             hmodel.model.set_calibration(**kwargs)
-            res += w*equilibrium(hmodel,
-                            m0,
-                            u,
-                            dr0=dr0,
-                            return_equilibrium=False)
+            res += w * equilibrium(hmodel, m0, u, dr0=dr0, return_equilibrium=False)
         return res
 
     solution = scipy.optimize.root(fun, x0=y0)
     if not solution.success:
-        if verbose: print(colored("failed", "red"))
+        if verbose:
+            print(colored("failed", "red"))
     else:
-        if verbose: print(colored("done", "green"))
-
+        if verbose:
+            print(colored("done", "green"))
 
     # grid_m = model.exogenous.discretize(to='mc', options=[{},{'N':N_mc}]).nodes
     # grid_s = model.get_grid().nodes
     #
-    y_ss = solution.x # vector of aggregate endogenous variables
-    m_ss = m0 # vector fo aggregate exogenous
+    y_ss = solution.x  # vector of aggregate endogenous variables
+    m_ss = m0  # vector fo aggregate exogenous
     eqs = []
-    for w, kwargs in (dist):
+    for w, kwargs in dist:
         hmodel.model.set_calibration(**kwargs)
-        (res_ss, sol_ss, μ_ss, Π_ss) = equilibrium(hmodel, m_ss, y_ss, p, dr0, return_equilibrium=True)
+        (res_ss, sol_ss, μ_ss, Π_ss) = equilibrium(
+            hmodel, m_ss, y_ss, p, dr0, return_equilibrium=True
+        )
         μ_ss = μ_ss.data
         dr_ss = sol_ss.dr
         eqs.append([w, Equilibrium(hmodel, m_ss, μ_ss, sol_ss.dr, y_ss)])
