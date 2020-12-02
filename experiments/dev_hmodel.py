@@ -8,14 +8,20 @@ from dolo import groot
 
 groot("examples")
 
-# Let's import the heterogeneous agents model
 from dolark import HModel
 
+<<<<<<< HEAD:experiments/dev_hmodel.py
 hmodel1 = HModel("ayiagari.yaml")
 print(hmodel1.name)
 
 
 hmodel2 = HModel("ayiagari_betadist.yaml")
+=======
+hmodel1 = HModel('ayiagari.yaml')
+print(hmodel1.name)
+
+hmodel2 = HModel('ayiagari_betadist.yaml')
+>>>>>>> 38bda6f09f77611f0b6b743ae8bf7ee738ace9af:experiments/test_hmodel.py
 print(hmodel2.name)
 
 hmodel3 = HModel("bfs_2017.yaml")
