@@ -212,10 +212,13 @@ class HModel:
             }
 
             preamble = {}  # for now
-            
+
             from dolang.symbolic import sanitize, stringify
-            eqs = parse_string(self.data['projection'], start='assignment_block')
-            eqs = sanitize(eqs, variables=vars) # just to replace (v,) by (v,0) # TODO: remove
+
+            eqs = parse_string(self.data["projection"], start="assignment_block")
+            eqs = sanitize(
+                eqs, variables=vars
+            )  # just to replace (v,) by (v,0) # TODO: remove
             eqs = stringify(eqs)
 
             content = {}
@@ -259,13 +262,15 @@ class HModel:
 
             from dolang.symbolic import sanitize, stringify
 
-            eqs = parse_string(self.data['equilibrium'], start="equation_block")
-            eqs = sanitize(eqs, variables=vars) 
+            eqs = parse_string(self.data["equilibrium"], start="equation_block")
+            eqs = sanitize(eqs, variables=vars)
             eqs = stringify(eqs)
             content = {}
             for i, eq in enumerate(eqs.children):
                 lhs, rhs = eq.children
-                content[f"eq_{i}"] = "({1})-({0})".format(str_expression(lhs),str_expression(rhs))
+                content[f"eq_{i}"] = "({1})-({0})".format(
+                    str_expression(lhs), str_expression(rhs)
+                )
 
             fff = FlatFunctionFactory(preamble, content, arguments, "equilibrium")
             _, gufun = dolang.function_compiler.make_method_from_factory(

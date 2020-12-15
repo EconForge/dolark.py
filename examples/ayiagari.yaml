@@ -22,11 +22,10 @@ calibration:
 
     beta: 0.99
     B: 1e-10
-    a_max: 200.
+    a_max: 300.
     a: 1
     i: a
-
-    K: 40
+    K: 41.
     alpha: 0.36
     A: 1
     N: 1

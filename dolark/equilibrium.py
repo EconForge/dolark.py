@@ -104,15 +104,9 @@ def equilibrium(
 
 def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
 
-<<<<<<< HEAD
-    m0 = hmodel.calibration['exogenous']
-    y0 = hmodel.calibration['aggregate']
-    p = hmodel.calibration['parameters']
-=======
-    m0 = hmodel.agent.calibration["exogenous"]
+    m0 = hmodel.calibration["exogenous"]
     y0 = hmodel.calibration["aggregate"]
     p = hmodel.calibration["parameters"]
->>>>>>> master
 
     if dr0 is None:
         if verbose:
