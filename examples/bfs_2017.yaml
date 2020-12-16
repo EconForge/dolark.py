@@ -76,7 +76,7 @@ distribution:
 
 options:
     grid: !Cartesian
-        orders: [100]
+        orders: [30]
 
 
 ---
