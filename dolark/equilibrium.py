@@ -74,10 +74,10 @@ def equilibrium(
 
     dp = inject_process(q0, hmodel.model.exogenous)
 
-    sol = time_iteration(hmodel.model, dr0=dr0, dprocess=dp, maxit = 10, verbose=verbose)
+    sol = time_iteration(hmodel.model, dr0=dr0, dprocess=dp, maxit=10, verbose=verbose)
     sol = improved_time_iteration(hmodel.model, dr0=sol, dprocess=dp, verbose=verbose)
     dr = sol.dr
-    
+
     if grids is None:
         exg, edg = grids = dr.exo_grid, dr.endo_grid
     else:

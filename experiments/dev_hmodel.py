@@ -64,6 +64,7 @@ plt.xlabel("β")
 # %%
 # Steady-state equilibrium: graphic resolution
 from tqdm import tqdm
+
 # %%
 # Aiyagari
 dr0 = hmodel1.get_starting_rule()
