@@ -74,7 +74,8 @@ def equilibrium(
 
     dp = inject_process(q0, hmodel.model.exogenous)
 
-    sol = improved_time_iteration(hmodel.model, dr0=dr0, dprocess=dp, verbose=verbose)
+    sol = time_iteration(hmodel.model, dr0=dr0, dprocess=dp, maxit=10, verbose=verbose)
+    sol = improved_time_iteration(hmodel.model, dr0=sol, dprocess=dp, verbose=verbose)
     dr = sol.dr
 
     if grids is None:
@@ -104,7 +105,7 @@ def equilibrium(
 
 def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
 
-    m0 = hmodel.agent.calibration["exogenous"]
+    m0 = hmodel.calibration["exogenous"]
     y0 = hmodel.calibration["aggregate"]
     p = hmodel.calibration["parameters"]
 
