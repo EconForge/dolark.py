@@ -10,7 +10,6 @@ from dolo import groot
 groot("examples")
 
 from dolark import HModel
-
 # %%
 hmodel1 = HModel("ayiagari.yaml")
 print(hmodel1.name)
@@ -23,12 +22,25 @@ print(hmodel3.name)
 # %%
 eq1 = find_steady_state(hmodel1)
 eq2 = find_steady_state(hmodel2)
-# %%
 eq3 = find_steady_state(hmodel3)
 # %%
-# Distribution of assets for each idiosyncratic state
+# Decision rules
+# Aiyagari
 from matplotlib import pyplot as plt
-
+s = eq1.dr.endo_grid.nodes
+plt.plot(s, eq1.dr(0, s), color="black")
+plt.plot(s, s, linestyle="--", color="black")
+# %%
+# Aiyagari with beta
+for i, (w, eq) in enumerate(eq2):
+    plt.plot(eq.dr.endo_grid.nodes, eq.dr(0, s), label=f"{i}")
+plt.plot(s, s, linestyle="--", color="black")
+# %%
+# BF 2017
+s = eq3.dr.endo_grid.nodes
+plt.plot(s, eq3.dr(0, s), color="black")
+# %%
+# Distribution of assets for each idiosyncratic state
 s = eq1.dr.endo_grid.nodes
 for j in range(3):
     plt.plot(s, eq1.μ[j, :], label=f"{j}")
