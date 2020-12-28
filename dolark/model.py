@@ -31,32 +31,26 @@ class HModel:
             )
             raise ex
 
-        self.__model__ = Model(model_data)
         self.data = hmodel_data
+
+        self.__model__ = Model(model_data)
 
         self.discretization_options = i_options
 
         # cache for functions
         self.__symbols__ = None
+        self.__transition__ = None
         self.__equilibrium__ = None
         self.__projection__ = None
         self.__features__ = None
 
         self.debug = debug
 
-        self.check()
         self.__set_changed__()
 
         from dolo.numeric.processes import IIDProcess, ProductProcess
 
-        # if (
-        #     dptype is None
-        #     and isinstance(self.model.exogenous, ProductProcess)
-        #     and (self.model.exogenous.processes[1], IIDProcess)
-        # ):
-        #     dptype = "iid"
-        # else:
-        #     dptype = "mc"
+        self.check()
         self.dptype = dptype
 
     @property
@@ -113,7 +107,11 @@ class HModel:
                     for e in self.model.exogenous.processes[1:]
                 ]
             )
+            __features__["with-aggregate-states"] = (
+                self.symbols.get("states") is not None
+            )
             self.__features__ = __features__
+
         return self.__features__
 
     @property
@@ -122,25 +120,60 @@ class HModel:
 
     def check(self):
 
-        kp = self.data.get("projection", None)
-        if kp is None:
+        from dolang.symbolic import remove_timing, parse_string, str_expression
+
+        p = self.data.get("projection")
+        if p is None:
             raise AggregateException("Missing 'projection section'.")
+        else:
+            exo = self.model.symbols["exogenous"]
+            proj = []
+            eqs = parse_string(p, start="assignment_block")
+            for eq in eqs.children:
+                lhs, _ = eq.children
+                lhs = remove_timing(lhs)
+                lhs = str_expression(lhs)
+                proj.append(lhs)
 
-        # idiosyms = self.model.symbols['exogenous']
-        # print(kp.value)
-        # vals = [*kp.keys()]
+            exo_in_proj = [e for e in exo if e in proj]
+            diff = set(proj).difference(set(exo_in_proj))
+            if diff:
+                raise AggregateException(
+                    f"Some projected values were not defined as exogenous in the agent's program: {', '.join(diff)}."
+                )
 
-        # targets = [e for e in idiosyms if e in vals]
-        # if len(targets) < len(vals):
-        #     diff = set(vals).difference(set(targets))
-        #     raise AggregateException(
-        #         f"Some projected values were not defined as exogenous in the agent's program: {', '.join(diff)}"
-        #     )
-        # expected = idiosyms[:len(targets)]
-        # if tuple(targets) != tuple(expected):
-        #     raise AggregateException(
-        #         f"Projected values must match first exogenous variables of model. Found {', '.join(targets)}. Expected {', '.join(expected)}"
-        #     )
+        t = self.data.get("transition")
+        states = self.symbols.get("states")
+        if t is not None and states is None:
+            raise AggregateException(
+                f"Aggregate transition equations are defined, whereas no aggregate state is filled in."
+            )
+        elif t is None and states is not None:
+            raise AggregateException(
+                f"Aggregate states are defined, whereas no transition equation is filled in."
+            )
+        elif t is not None and states is not None:
+            trans = []
+            eqs = parse_string(t, start="assignment_block")
+            for eq in eqs.children:
+                lhs, _ = eq.children
+                lhs = remove_timing(lhs)
+                lhs = str_expression(lhs)
+                trans.append(lhs)
+
+            states_in_trans = [e for e in states if e in trans]
+            trans_in_states = [e for e in trans if e in states]
+            diff = set(trans).difference(set(states_in_trans))
+            if diff:
+                raise AggregateException(
+                    f"Some variables defined in transition equations are not filled in aggregate states: {', '.join(diff)}."
+                )
+
+            diff = set(states).difference(set(trans_in_states))
+            if diff:
+                raise AggregateException(
+                    f"Some aggregate states do not have transition equations filled in: {', '.join(diff)}."
+                )
 
     def set_calibration(self, *pargs, **kwargs):
         if len(pargs) == 1:
@@ -197,12 +230,19 @@ class HModel:
     def projection(self):  # , m: 'n_e', y: "n_y", p: "n_p"):
 
         if self.__projection__ is None:
-
-            arguments_ = {
-                "m": [(e, 0) for e in self.symbols["exogenous"]],
-                "y": [(e, 0) for e in self.symbols["aggregate"]],
-                "p": self.symbols["parameters"],
-            }
+            if self.features["with-aggregate-states"]:
+                arguments_ = {
+                    "m": [(e, 0) for e in self.symbols["exogenous"]],
+                    "S": [(e, 0) for e in self.symbols["states"]],
+                    "X": [(e, 0) for e in self.symbols["aggregate"]],
+                    "p": self.symbols["parameters"],
+                }
+            else:
+                arguments_ = {
+                    "m": [(e, 0) for e in self.symbols["exogenous"]],
+                    "X": [(e, 0) for e in self.symbols["aggregate"]],
+                    "p": self.symbols["parameters"],
+                }
 
             vars = sum([[e[0] for e in h] for h in [*arguments_.values()][:-1]], [])
 
@@ -216,9 +256,7 @@ class HModel:
             from dolang.symbolic import sanitize, stringify
 
             eqs = parse_string(self.data["projection"], start="assignment_block")
-            eqs = sanitize(
-                eqs, variables=vars
-            )  # just to replace (v,) by (v,0) # TODO: remove
+            eqs = sanitize(eqs, variables=vars)
             eqs = stringify(eqs)
 
             content = {}
@@ -238,18 +276,84 @@ class HModel:
         return self.__projection__
 
     @property
+    def 𝒢(self):
+
+        if (self.__transition__ is None) and self.features["with-aggregate-states"]:
+            arguments_ = {
+                "S_m1": [(e, -1) for e in self.symbols["states"]],
+                "X_m1": [(e, -1) for e in self.symbols["aggregate"]],
+                "m_m1": [(e, -1) for e in self.symbols["exogenous"]],
+                "m": [(e, 0) for e in self.symbols["exogenous"]],
+                "p": self.symbols["parameters"],
+            }
+
+            vars = sum([[e[0] for e in h] for h in [*arguments_.values()][:-1]], [])
+
+            arguments = {
+                k: [dolang.symbolic.stringify_symbol(e) for e in v]
+                for k, v in arguments_.items()
+            }
+
+            preamble = {}  # for now
+
+            from dolang.symbolic import (
+                sanitize,
+                parse_string,
+                str_expression,
+                stringify,
+            )
+
+            eqs = parse_string(self.data["transition"], start="assignment_block")
+            eqs = sanitize(eqs, variables=vars)
+            eqs = stringify(eqs)
+
+            content = {}
+            for i, eq in enumerate(eqs.children):
+                lhs, rhs = eq.children
+                content[str_expression(lhs)] = str_expression(rhs)
+
+            from dolang.factory import FlatFunctionFactory
+
+            fff = FlatFunctionFactory(preamble, content, arguments, "transition")
+
+            _, gufun = dolang.function_compiler.make_method_from_factory(
+                fff, debug=self.debug
+            )
+
+            from dolang.vectorize import standard_function
+
+            self.__transition__ = standard_function(gufun, len(content))
+
+        return self.__transition__
+
+    @property
     def ℰ(self):
 
         if self.__equilibrium__ is None:
-
-            arguments_ = {
-                "e": [(e, 0) for e in self.model.symbols["exogenous"]],
-                "s": [(e, 0) for e in self.model.symbols["states"]],
-                "x": [(e, 0) for e in self.model.symbols["controls"]],
-                "m": [(e, 0) for e in self.symbols["exogenous"]],
-                "y": [(e, 0) for e in self.symbols["aggregate"]],
-                "p": self.symbols["parameters"],
-            }
+            if self.features["with-aggregate-states"]:
+                arguments_ = {
+                    "e": [(e, 0) for e in self.model.symbols["exogenous"]],
+                    "s": [(e, 0) for e in self.model.symbols["states"]],
+                    "x": [(e, 0) for e in self.model.symbols["controls"]],
+                    "m": [(e, 0) for e in self.symbols["exogenous"]],
+                    "S": [(e, 0) for e in self.symbols["states"]],
+                    "X": [(e, 0) for e in self.symbols["aggregate"]],
+                    "m_1": [(e, 1) for e in self.symbols["exogenous"]],
+                    "S_1": [(e, 1) for e in self.symbols["states"]],
+                    "X_1": [(e, 1) for e in self.symbols["aggregate"]],
+                    "p": self.symbols["parameters"],
+                }
+            else:
+                arguments_ = {
+                    "e": [(e, 0) for e in self.model.symbols["exogenous"]],
+                    "s": [(e, 0) for e in self.model.symbols["states"]],
+                    "x": [(e, 0) for e in self.model.symbols["controls"]],
+                    "m": [(e, 0) for e in self.symbols["exogenous"]],
+                    "X": [(e, 0) for e in self.symbols["aggregate"]],
+                    "m_1": [(e, 1) for e in self.symbols["exogenous"]],
+                    "X_1": [(e, 1) for e in self.symbols["aggregate"]],
+                    "p": self.symbols["parameters"],
+                }
 
             vars = sum([[e[0] for e in h] for h in [*arguments_.values()][:-1]], [])
 
@@ -288,7 +392,16 @@ class HModel:
         ρ = self.exogenous.ρ
         return ρ * m
 
-    def 𝒜(self, grids, m0: "n_e", μ0: "n_m.N", xx0: "n_m.N.n_x", y0: "n_y", p: "n_p"):
+    def 𝒜(
+        self,
+        grids,
+        m0: "n_e",
+        μ0: "n_m.N",
+        xx0: "n_m.N.n_x",
+        X0: "n_X",
+        p: "n_p",
+        S0=None,
+    ):
 
         from dolo.numeric.processes import EmptyGrid
         import numpy as np
@@ -302,12 +415,20 @@ class HModel:
         else:
             mi = exg.nodes
         s = eng.nodes
-        res = sum(
-            [
-                μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, y0, p)
-                for i in range(xx0.shape[0])
-            ]
-        )
+        if self.features["with-aggregate-states"]:
+            res = sum(
+                [
+                    μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, X0, S0, m0, X0, S0, p)
+                    for i in range(xx0.shape[0])
+                ]
+            )
+        else:
+            res = sum(
+                [
+                    μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, X0, m0, X0, p)
+                    for i in range(xx0.shape[0])
+                ]
+            )
         return res
 
     def get_starting_rule(self, method="improved_time_iteration", **kwargs):

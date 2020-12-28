@@ -10,6 +10,7 @@ from dolo import groot
 groot("examples")
 
 from dolark import HModel
+
 # %%
 hmodel1 = HModel("ayiagari.yaml")
 print(hmodel1.name)
@@ -24,9 +25,13 @@ eq1 = find_steady_state(hmodel1)
 eq2 = find_steady_state(hmodel2)
 eq3 = find_steady_state(hmodel3)
 # %%
+hmodel = HModel("prototype.yaml")
+eq = find_steady_state(hmodel)
+# %%
 # Decision rules
 # Aiyagari
 from matplotlib import pyplot as plt
+
 s = eq1.dr.endo_grid.nodes
 plt.plot(s, eq1.dr(0, s), color="black")
 plt.plot(s, s, linestyle="--", color="black")
