@@ -23,8 +23,10 @@ calibration:
     l: 1/0.9
 
     wbar: 1
-    rbar: 0.01 + δ
+    rbar: 0.005 + δ
     ʊbar: 0.07
+
+
     μ_ue: 0.15
     τ: 0
 
@@ -94,7 +96,7 @@ symbols:
 
 calibration:
     α: 0.36
-    YK: 10.26
+    YK: 5 # 10.26
     L: 1
     l: 1/0.9
     Z: 1.0
@@ -105,8 +107,8 @@ calibration:
 
 
 
-exogenous: !ConstantProcess
-      μ: [1.0, 1.0, 1.0]
+# exogenous: !ConstantProcess
+#       μ: [1.0, 1.0, 1.0]
 
 projection: |
     w[t] = (1-α)*Z[t]*(K[t]/(l*L))**(α)

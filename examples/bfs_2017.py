@@ -73,6 +73,24 @@ dr = time_iteration(hmodel.agent)
 
 # %%
 
+# dr1 = time_iteration(hmodel.agent, dr0=dr)
+
+# %%
+
+
+# from dolo.algos.time_iteration import improved_time_iteration
+
+#%%
+
+# drs = time_iteration(hmodel.agent, maxit=10,)
+
+# #%%
+# sol = improved_time_iteration(hmodel.agent, dr0=dr1, verbose=True, method='iti', maxit=5)
+
+# dr2 = sol.dr
+
+# %%
+
 from matplotlib import pyplot as plt
 from dolo import tabulate
 
@@ -110,4 +128,78 @@ hmodel.agent.calibration["r", "w"]
 m0, y0, p = hmodel.calibration["exogenous", "aggregate", "parameters"]
 hmodel.projection(m0, y0, p)  # values for r, w, ω (not the same at all)
 
+# %%
+
+
+
+from dolark.equilibrium import find_steady_state
+# %%
+
+#%%
+
+eqs = find_steady_state(hmodel, dr0 =dr)
+
+# %%
+
+eqs.μ.shape
+
+# %%
+
+μ = eqs.μ
+
+plt.plot(μ.data)
+mvec = hmodel.agent.endo_grid.nodes
+
+
+dk = mvec - dr(mvec)
+
+#%%
+
+μ.data.ravel()*(dk)
+
+
+# %%
+a
+
+from dolo.algos.ergodic import ergodic_distribution
+# %%
+
+
+μ = ergodic_distribution(hmodel.agent, dr)[1]
+
+# %%
+
+plt.plot(μ.data.ravel())
+
+# %%
+
+hmodel = HModel("bfs_2017.yaml")
+
+# %%
+
+hmodel.agent.__exogenous__.processes[0].μ
+
+
+# %%
+
+m, y, p = hmodel.calibration['exogenous','aggregate','parameters']
+
+# %%
+
+w, r, ʊ = hmodel.projection(m,y,p)
+
+# %%
+
+hmodel.agent.eval_formula("(D+r)/Đ")
+
+# %%
+
+dr = time_iteration(hmodel.agent, dr0=dr)
+
+
+#%%
+
+μ = ergodic_distribution(hmodel.agent, dr)[1]
+
+plt.plot(μ.data.ravel())
 # %%
