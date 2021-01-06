@@ -33,7 +33,10 @@ calibration:
     μ_ψ: 1
     σ_ψ: (0.010*4)/11
 
-    m: 1.2
+    μ_θp: (1-τ)*l
+    σ_θp: (1-τ)*l*σ_θ
+
+    m: 20
     c: (m*(((D+r)/Đ)-1) + 1 )/((D+r)/Đ)
     θ: 1
 
@@ -60,14 +63,15 @@ exogenous:
       distributions:
         0: !ConstantProcess
           μ: [μ_ue]
+
         1: !UNormal
-          μ: (1-τ)*l
-          σ: (1-τ)*l*σ_θ
+          μ: μ_θp
+          σ: σ_θp
 
         # 1: !LogNormal
-        #   μ: (1-τ)*l*μ_θ
-        #   σ: (((1-τ)*l)^2)*(σ_θ)^2
-          ### transformed for μ_e=(1-τ)*l*θ)
+        #   μ: log( μ_θp^2/(μ_θp^2 + σ_θp^2)^(1/2) )
+        #   σ: (log( 1 + σ_θp^2/ μ_θp^2 ))^(1/2)
+        #   ### transformed for μ_e=(1-τ)*l*θ)
 
 distribution:
     β: !Uniform
@@ -76,7 +80,7 @@ distribution:
 
 options:
     grid: !Cartesian
-        orders: [30]
+        n: [300]
 
 
 ---

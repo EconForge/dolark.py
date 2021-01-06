@@ -1,17 +1,4 @@
-# -*- coding: utf-8 -*-
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: light
-#       format_version: '1.5'
-#       jupytext_version: 1.4.2
-#   kernelspec:
-#     display_name: Python 3
-#     language: python
-#     name: python3
-# ---
+# %%
 
 # WARNING: this is not working yet
 
@@ -29,6 +16,24 @@ hmodel = HModel("bfs_2017.yaml")
 hmodel.features
 # -
 hmodel.agent
+
+#%%
+
+
+
+#%%
+
+mix = hmodel.agent.__exogenous__.processes[2]
+nn = mix.distributions['1']
+
+sum( [w * n for w,n in nn.discretize().items()] )
+
+hmodel.agent.calibration['τ']
+
+
+
+
+# %%
 
 # Agent's distributions look good
 
@@ -51,9 +56,11 @@ hmodel.agent
 from dolo import time_iteration, improved_time_iteration
 
 hmodel.agent.__exogenous__.processes
-hmodel.agent.__exogenous__.processes[0].discretize()
-hmodel.agent.__exogenous__.processes[1].discretize()
-hmodel.agent.__exogenous__.processes[2].discretize()
+
+
+mc_0 = hmodel.agent.__exogenous__.processes[0].discretize(to='mc')
+mc_1 = hmodel.agent.__exogenous__.processes[1].discretize(to='mc')
+mx = hmodel.agent.__exogenous__.processes[2].discretize(to='mc')
 
 hmodel.agent.__exogenous__.processes[0]
 hmodel.agent.__exogenous__.processes[1]
@@ -64,12 +71,22 @@ grid, dprocess = hmodel.agent.discretize()
 dr = time_iteration(hmodel.agent)
 # # %time dr = improved_time_iteration(hmodel.model, dr0=dr, verbose=True, details=False)
 
+# %%
 
+from matplotlib import pyplot as plt
 from dolo import tabulate
 
 tab = tabulate(hmodel.agent, dr, "m")
 
 plt.plot(tab["m"], tab["c"])
+
+# %%
+
+plt.plot(pps_normal, pps_normal*0,'o')
+plt.plot(pps_lognormal, pps_lognormal*0, 'x')
+
+# %%
+
 
 # ergodic distribution (premature)
 
@@ -92,3 +109,5 @@ hmodel.agent.calibration["r", "w"]
 # here are the values projected from market equilibrium, given default level of capital
 m0, y0, p = hmodel.calibration["exogenous", "aggregate", "parameters"]
 hmodel.projection(m0, y0, p)  # values for r, w, ω (not the same at all)
+
+# %%
