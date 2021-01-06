@@ -9,7 +9,7 @@ from .shocks import discretize_idiosyncratic_shocks
 
 
 class Equilibrium:
-    def __init__(self, aggmodel, m, μ, dr, y):
+    def __init__(self, aggmodel, m, μ, dr, X, S=None):
         self.m = m
         self.μ = μ
         self.dr = dr
@@ -23,11 +23,12 @@ class Equilibrium:
             ],
             axis=0,
         )
-        self.y = y
+        self.X = X
+        self.S = S
         self.c = dr.coefficients
 
         self.states = np.concatenate([e.ravel() for e in (m, μ)])
-        self.controls = np.concatenate([e.ravel() for e in (self.x, y)])
+        self.controls = np.concatenate([e.ravel() for e in (self.x, X)])
         self.aggmodel = aggmodel
 
     def as_df(self):
@@ -57,10 +58,29 @@ class Equilibrium:
         return df
 
 
+def transition(
+    hmodel,
+    m0: "vector",
+    X0: "vector",
+    S0: "vector",
+    p=None,
+):
+
+    if hmodel.features["with-aggregate-states"]:
+        if p is None:
+            p = hmodel.calibration["parameters"]
+        return S0 - hmodel.𝒢(S0, X0, m0, m0, p)
+    else:
+        raise Exception(
+            "The considered model does not include any valid aggregate transition equation."
+        )
+
+
 def equilibrium(
     hmodel,
     m0: "vector",
-    y0: "vector",
+    X0: "vector",
+    S0=None,
     p=None,
     dr0=None,
     grids=None,
@@ -70,7 +90,10 @@ def equilibrium(
     if p is None:
         p = hmodel.calibration["parameters"]
 
-    q0 = hmodel.projection(m0, y0, p)
+    if S0 is None:
+        q0 = hmodel.projection(m0, X0, p)
+    else:
+        q0 = hmodel.projection(m0, S0, X0, p)
 
     dp = inject_process(q0, hmodel.model.exogenous)
 
@@ -94,9 +117,7 @@ def equilibrium(
         μμ0 = μ0.data
 
     xx0 = np.concatenate([e[None, :, :] for e in [dr(i, s) for i in range(nn)]], axis=0)
-
-    res = hmodel.𝒜(grids, m0, μμ0, xx0, y0, p)
-
+    res = hmodel.𝒜(grids, m0, μμ0, xx0, X0, p, S0=S0)
     if return_equilibrium:
         return (res, sol, μ0, Π0)
     else:
@@ -106,7 +127,7 @@ def equilibrium(
 def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
 
     m0 = hmodel.calibration["exogenous"]
-    y0 = hmodel.calibration["aggregate"]
+    X0 = hmodel.calibration["aggregate"]
     p = hmodel.calibration["parameters"]
 
     if dr0 is None:
@@ -126,14 +147,34 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
     else:
         dist = distribs
 
-    def fun(u):
-        res = y0 * 0
-        for w, kwargs in dist:
-            hmodel.model.set_calibration(**kwargs)
-            res += w * equilibrium(hmodel, m0, u, dr0=dr0, return_equilibrium=False)
-        return res
+    if hmodel.features["with-aggregate-states"]:
+        S0 = hmodel.calibration["states"]
+        n_X = len(X0)
 
-    solution = scipy.optimize.root(fun, x0=y0)
+        def fun(u):
+            res_X = X0 * 0
+            for w, kwargs in dist:
+                hmodel.model.set_calibration(**kwargs)
+                res_X += w * equilibrium(
+                    hmodel, m0, u[:n_X], S0=u[n_X:], dr0=dr0, return_equilibrium=False
+                )
+            res_S = transition(hmodel, m0, u[:n_X], u[n_X:])
+            res = np.concatenate((res_X, res_S))
+            return res
+
+        Y0 = np.concatenate((X0, S0))
+        solution = scipy.optimize.root(fun, x0=Y0)
+    else:
+
+        def fun(u):
+            res = X0 * 0
+            for w, kwargs in dist:
+                hmodel.model.set_calibration(**kwargs)
+                res += w * equilibrium(hmodel, m0, u, dr0=dr0, return_equilibrium=False)
+            return res
+
+        solution = scipy.optimize.root(fun, x0=X0)
+
     if not solution.success:
         if verbose:
             print(colored("failed", "red"))
@@ -144,17 +185,40 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
     # grid_m = model.exogenous.discretize(to='mc', options=[{},{'N':N_mc}]).nodes
     # grid_s = model.get_grid().nodes
     #
-    y_ss = solution.x  # vector of aggregate endogenous variables
+    Y_ss = solution.x  # vector of aggregate endogenous variables
     m_ss = m0  # vector fo aggregate exogenous
     eqs = []
-    for w, kwargs in dist:
-        hmodel.model.set_calibration(**kwargs)
-        (res_ss, sol_ss, μ_ss, Π_ss) = equilibrium(
-            hmodel, m_ss, y_ss, p, dr0, return_equilibrium=True
-        )
-        μ_ss = μ_ss.data
-        dr_ss = sol_ss.dr
-        eqs.append([w, Equilibrium(hmodel, m_ss, μ_ss, sol_ss.dr, y_ss)])
+    if hmodel.features["with-aggregate-states"]:
+        for w, kwargs in dist:
+            hmodel.model.set_calibration(**kwargs)
+            (res_ss, sol_ss, μ_ss, Π_ss) = equilibrium(
+                hmodel,
+                m_ss,
+                Y_ss[:n_X],
+                p=p,
+                dr0=dr0,
+                S0=Y_ss[n_X:],
+                return_equilibrium=True,
+            )
+            μ_ss = μ_ss.data
+            dr_ss = sol_ss.dr
+            eqs.append(
+                [
+                    w,
+                    Equilibrium(
+                        hmodel, m_ss, μ_ss, sol_ss.dr, Y_ss[:n_X], S=Y_ss[n_X:]
+                    ),
+                ]
+            )
+    else:
+        for w, kwargs in dist:
+            hmodel.model.set_calibration(**kwargs)
+            (res_ss, sol_ss, μ_ss, Π_ss) = equilibrium(
+                hmodel, m_ss, Y_ss, p=p, dr0=dr0, return_equilibrium=True
+            )
+            μ_ss = μ_ss.data
+            dr_ss = sol_ss.dr
+            eqs.append([w, Equilibrium(hmodel, m_ss, μ_ss, sol_ss.dr, Y_ss)])
 
     if distribs is None:
         return eqs[0][1]
