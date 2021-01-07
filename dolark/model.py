@@ -399,14 +399,18 @@ class HModel:
         μ0: "n_m.N",
         xx0: "n_m.N.n_x",
         X0: "n_X",
+        m1: "n_e",
+        X1: "n_X",
         p: "n_p",
         S0=None,
+        S1=None
     ):
 
         from dolo.numeric.processes import EmptyGrid
         import numpy as np
 
         μ0 = np.array(μ0)
+
         ℰ = self.ℰ
         exg, eng = grids
         if isinstance(exg, EmptyGrid):
@@ -418,14 +422,14 @@ class HModel:
         if self.features["with-aggregate-states"]:
             res = sum(
                 [
-                    μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, X0, S0, m0, X0, S0, p)
+                    μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, X0, S0, m1, X1, S1, p)
                     for i in range(xx0.shape[0])
                 ]
             )
         else:
             res = sum(
                 [
-                    μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, X0, m0, X0, p)
+                    μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, X0, m1, X1, p)
                     for i in range(xx0.shape[0])
                 ]
             )

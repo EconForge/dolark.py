@@ -117,7 +117,7 @@ def equilibrium(
         μμ0 = μ0.data
 
     xx0 = np.concatenate([e[None, :, :] for e in [dr(i, s) for i in range(nn)]], axis=0)
-    res = hmodel.𝒜(grids, m0, μμ0, xx0, X0, p, S0=S0)
+    res = hmodel.𝒜(grids, m0, μμ0, xx0, X0, m0, X0, p, S0=S0, S1=S0)
     if return_equilibrium:
         return (res, sol, μ0, Π0)
     else:
