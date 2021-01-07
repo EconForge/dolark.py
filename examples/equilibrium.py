@@ -7,7 +7,6 @@ from dolark import HModel
 from dolark.equilibrium import find_steady_state
 from matplotlib import pyplot as plt
 
-# +
 hmodel1 = HModel("ayiagari.yaml")
 print(hmodel1.name)
 

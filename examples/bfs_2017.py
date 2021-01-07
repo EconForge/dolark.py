@@ -1,8 +1,6 @@
 # %%
 
 # WARNING: this is not working yet
-
-# +
 from dolo import *
 
 # from matplotlib import pyplot as plt
@@ -17,77 +15,45 @@ hmodel.features
 # -
 hmodel.agent
 
-#%%
-
-
 
 #%%
 
-mix = hmodel.agent.__exogenous__.processes[2]
-nn = mix.distributions['1']
+x1 = hmodel.agent.eval_formula("(D+r)/Đ")
+x2 = hmodel.agent.eval_formula("β")
 
-sum( [w * n for w,n in nn.discretize().items()] )
+print(f"Effective discount rate (D+r)/Đ = {x1}")
+print(f"Time discount {x2}")
 
-hmodel.agent.calibration['τ']
-
-
-
-
-# %%
-
-# Agent's distributions look good
-
-# dis_iids = []
-# for i in range(3):
-#     dis_iids.append(hmodel.agent.exogenous.processes[i].discretize(to='iid'))
-
-
-# df1 = pd.DataFrame([[w,x[0]] for w,x in dis_iids[0].iteritems(0)], columns=['w', 'x'])  #constant
-# df2 = pd.DataFrame([[w,x[0]] for w,x in dis_iids[1].iteritems(0)], columns=['w', 'x'])
-# df3 = pd.DataFrame([[w,x[0]] for w,x in dis_iids[2].iteritems(0)], columns=['w', 'x'])
-
-
-# alt.Chart(df2, title="Ψ").mark_bar().encode(x="x", y="w") & alt.Chart(
-#     df3, title="Ξ"
-# ).mark_bar().encode(x="x", y="w")
-
-# Agents' decision rule is not correct yet
-
-from dolo import time_iteration, improved_time_iteration
-
-hmodel.agent.__exogenous__.processes
-
-
-mc_0 = hmodel.agent.__exogenous__.processes[0].discretize(to='mc')
-mc_1 = hmodel.agent.__exogenous__.processes[1].discretize(to='mc')
-mx = hmodel.agent.__exogenous__.processes[2].discretize(to='mc')
-
-hmodel.agent.__exogenous__.processes[0]
-hmodel.agent.__exogenous__.processes[1]
-hmodel.agent.__exogenous__.processes[2]
-
-grid, dprocess = hmodel.agent.discretize()
-
-dr = time_iteration(hmodel.agent)
-# # %time dr = improved_time_iteration(hmodel.model, dr0=dr, verbose=True, details=False)
-
-# %%
-
-# dr1 = time_iteration(hmodel.agent, dr0=dr)
-
-# %%
-
-
-# from dolo.algos.time_iteration import improved_time_iteration
 
 #%%
 
-# drs = time_iteration(hmodel.agent, maxit=10,)
+dr = time_iteration(hmodel.agent, maxit=100)
+sol = improved_time_iteration(hmodel.agent, dr0=dr, verbose=True)
+dr = sol.dr
 
-# #%%
-# sol = improved_time_iteration(hmodel.agent, dr0=dr1, verbose=True, method='iti', maxit=5)
+#%%
 
-# dr2 = sol.dr
+from dolo.algos.ergodic import ergodic_distribution
+
+μ = ergodic_distribution(hmodel.agent, dr)[1]
+
+#%%
+
+from matplotlib import pyplot as plt
+plt.plot(μ.data.ravel())
+
+
+#%%
+
+
+improved_time_iteration#%%
+
+from dolark.equilibrium import find_steady_state
+eqs = find_steady_state(hmodel, dr0 =dr, verbose='full', return_fun=False)
+
+
+#%%
+
 
 # %%
 
@@ -96,110 +62,20 @@ from dolo import tabulate
 
 tab = tabulate(hmodel.agent, dr, "m")
 
+plt.plot(tab["m"], tab["m"])
 plt.plot(tab["m"], tab["c"])
+plt.grid(True)
 
 # %%
-
-plt.plot(pps_normal, pps_normal*0,'o')
-plt.plot(pps_lognormal, pps_lognormal*0, 'x')
-
-# %%
-
-
-# ergodic distribution (premature)
-
-Π, μ = ergodic_distribution(hmodel.model, dr)
-df_μ = μ.to_dataframe("μ").reset_index()
-
-ch = alt.Chart(tab)
-g1 = ch.mark_line(color="black", strokeDash=[1, 1]).encode(
-    x="m", y="m"
-) + ch.mark_line().encode(x="m", y="c")
-g2 = alt.Chart(df_μ).mark_line().encode(x="m:Q", y="mu:Q")
-
-g2
-
-# There seem to be something wrong with the calibration at the aggregate level
-
-# here are the value of i.r. and w calibrated at the agent's level
-hmodel.agent.calibration["r", "w"]
-
-# here are the values projected from market equilibrium, given default level of capital
-m0, y0, p = hmodel.calibration["exogenous", "aggregate", "parameters"]
-hmodel.projection(m0, y0, p)  # values for r, w, ω (not the same at all)
-
-# %%
-
 
 
 from dolark.equilibrium import find_steady_state
-# %%
-
-#%%
-
-eqs = find_steady_state(hmodel, dr0 =dr)
+# 
 
 # %%
 
-eqs.μ.shape
 
-# %%
-
-μ = eqs.μ
-
-plt.plot(μ.data)
-mvec = hmodel.agent.endo_grid.nodes
+plt.plot( eqs.μ.ravel() )
 
 
-dk = mvec - dr(mvec)
-
-#%%
-
-μ.data.ravel()*(dk)
-
-
-# %%
-a
-
-from dolo.algos.ergodic import ergodic_distribution
-# %%
-
-
-μ = ergodic_distribution(hmodel.agent, dr)[1]
-
-# %%
-
-plt.plot(μ.data.ravel())
-
-# %%
-
-hmodel = HModel("bfs_2017.yaml")
-
-# %%
-
-hmodel.agent.__exogenous__.processes[0].μ
-
-
-# %%
-
-m, y, p = hmodel.calibration['exogenous','aggregate','parameters']
-
-# %%
-
-w, r, ʊ = hmodel.projection(m,y,p)
-
-# %%
-
-hmodel.agent.eval_formula("(D+r)/Đ")
-
-# %%
-
-dr = time_iteration(hmodel.agent, dr0=dr)
-
-
-#%%
-
-μ = ergodic_distribution(hmodel.agent, dr)[1]
-
-plt.plot(μ.data.ravel())
 # %%

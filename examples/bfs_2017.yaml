@@ -18,14 +18,9 @@ calibration:
     ρ: 1
     β: 0.99
     δ: 0.025
-    D: 1-δ
+    D: 1-δ # depreciation
     Đ: 1-0.00625
     l: 1/0.9
-
-    wbar: 1
-    rbar: 0.005 + δ
-    ʊbar: 0.07
-
 
     μ_ue: 0.15
     τ: 0
@@ -42,11 +37,23 @@ calibration:
     c: (m*(((D+r)/Đ)-1) + 1 )/((D+r)/Đ)
     θ: 1
 
-    w : wbar
-    r : rbar
-    ʊ : ʊbar
+    # w : wbar
+    # r : rbar
+    # ʊ : ʊbar
     ψ : 1
     ξ : 1
+
+
+    K: 80
+    L: 1
+    α: 0.36
+    w: (1-α)*(K/(l*L))^(α)
+    r: α*(l*L/K)^(1-α)
+    ʊ: ʊbar
+
+    wbar: w
+    rbar: r
+    ʊbar: 0.07
 
 domain:
     m: [0.1, 10.0]
@@ -92,29 +99,26 @@ name: Caroll
 symbols:
     exogenous: [Z, Ψ, Ξ]
     aggregate: [K]
-    parameters: [α, YK, L, l, ʊbar]
+    parameters: [α, δ, YK, L, l, ʊbar]
 
 calibration:
     α: 0.36
-    YK: 5 # 10.26
+    δ: 0.025
+    # YK: 10.26
+    K: 80
     L: 1
     l: 1/0.9
     Z: 1.0
     Ψ: 1.0
     Ξ: 1.0
-    K: l*(YK)**(1/(α-1))
+    # K: l*(YK)**(1/(α-1))
     ʊbar: 0.07
 
-
-
-# exogenous: !ConstantProcess
-#       μ: [1.0, 1.0, 1.0]
-
 projection: |
-    w[t] = (1-α)*Z[t]*(K[t]/(l*L))**(α)
-    r[t] = α*YK
+    w[t] = (1-α)*Z[t]*(K[t]/(l*L))^(α)
+    r[t] = α*Z[t]*(l*L/K[t])^(1-α)
     ʊ[t] = ʊbar
 
 
 equilibrium: |
-    K[t] = m[t]-c[t]
+    K[t] = (m[t]-c[t])/δ

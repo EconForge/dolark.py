@@ -124,7 +124,7 @@ def equilibrium(
         return res
 
 
-def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
+def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=False):
 
     m0 = hmodel.calibration["exogenous"]
     X0 = hmodel.calibration["aggregate"]
@@ -160,9 +160,14 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
                 )
             res_S = transition(hmodel, m0, u[:n_X], u[n_X:])
             res = np.concatenate((res_X, res_S))
+            if verbose=='full':
+                print(f"Value at {u} | {res}")
             return res
 
         Y0 = np.concatenate((X0, S0))
+        if return_fun:
+            return (fun, Y0)
+
         solution = scipy.optimize.root(fun, x0=Y0)
     else:
 
@@ -171,7 +176,12 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None):
             for w, kwargs in dist:
                 hmodel.model.set_calibration(**kwargs)
                 res += w * equilibrium(hmodel, m0, u, dr0=dr0, return_equilibrium=False)
+            if verbose=='full':
+                print(f"Value at {u} | {res}")
             return res
+
+        if return_fun:
+            return (fun, X0)
 
         solution = scipy.optimize.root(fun, x0=X0)
 
