@@ -1,0 +1,129 @@
+name: Consumption Savings
+
+symbols:
+    exogenous: [w,r,ʊ,ψ,ξ]
+    states: [m]
+    controls: [c]
+    parameters: [ρ, β, δ, D, Đ, wbar, rbar, ʊbar, μ_ue, τ, μ_θ, σ_θ, μ_ψ, σ_ψ, l]
+
+equations:
+
+    transition: |
+        m[t] = ((D+r[t])/Đ)*(m[t-1]-c[t-1])*(1/ψ[t]) + ξ[t]
+
+    arbitrage: |
+        ( β*(c[t+1]/c[t])^(-ρ) )*((ψ[t+1])^(-ρ))*(D+r[t+1])/Đ - 1 ⟂ 0.0<=c[t]<=m[t]
+
+calibration:
+    ρ: 1
+    β: 0.99
+    δ: 0.025
+    D: 1-δ # depreciation
+    Đ: 1-0.00625
+    l: 1/0.9
+
+    μ_ue: 0.15
+    τ: 0
+
+    μ_θ: 1
+    σ_θ: 0.010*4
+    μ_ψ: 1
+    σ_ψ: (0.010*4)/11
+
+    μ_θp: (1-τ)*l
+    σ_θp: (1-τ)*l*σ_θ
+
+    m: 20
+    c: (m*(((D+r)/Đ)-1) + 1 )/((D+r)/Đ)
+    θ: 1
+
+    # w : wbar
+    # r : rbar
+    # ʊ : ʊbar
+    ψ : 1
+    ξ : 1
+
+
+    K: 80
+    L: 1
+    α: 0.36
+    w: (1-α)*(K/(l*L))^(α)
+    r: α*(l*L/K)^(1-α)
+    ʊ: ʊbar
+
+    wbar: w
+    rbar: r
+    ʊbar: 0.07
+
+domain:
+    m: [0.1, 10.0]
+
+exogenous:
+    w,r,ʊ: !ConstantProcess
+      μ: [wbar, rbar, ʊbar]
+
+    ψ: !UNormal
+      μ: 1
+      σ: 0.00004
+
+    ξ: !Mixture
+      index: !Bernouilli
+        π: 1-ʊbar
+      distributions:
+        0: !ConstantProcess
+          μ: [μ_ue]
+
+        1: !UNormal
+          μ: μ_θp
+          σ: σ_θp
+
+        # 1: !LogNormal
+        #   μ: log( μ_θp^2/(μ_θp^2 + σ_θp^2)^(1/2) )
+        #   σ: (log( 1 + σ_θp^2/ μ_θp^2 ))^(1/2)
+        #   ### transformed for μ_e=(1-τ)*l*θ)
+
+distribution:
+    β: !Uniform
+        a: 0.98
+        b: 0.99
+
+options:
+    grid: !Cartesian
+        n: [300]
+
+
+---
+
+name: Caroll
+
+symbols:
+    exogenous: [Z, Ψ, Ξ]
+    states: [K]
+    aggregate: [i]
+    parameters: [α, δ, YK, L, l, ʊbar]
+
+calibration:
+    α: 0.36
+    δ: 0.025
+    # YK: 10.26
+    K: 80
+
+    i: K*δ
+    L: 1
+    l: 1/0.9
+    Z: 1.0
+    Ψ: 1.0
+    Ξ: 1.0
+    # K: l*(YK)**(1/(α-1))
+    ʊbar: 0.07
+
+projection: |
+    w[t] = (1-α)*Z[t]*(K[t]/(l*L))^(α)
+    r[t] = α*Z[t]*(l*L/K[t])^(1-α)
+    ʊ[t] = ʊbar
+
+transition: |
+    K[t] = K[t-1]*(1-δ) + i[t-1]
+
+equilibrium: |
+    i[t] = (m[t]-c[t])

@@ -229,6 +229,10 @@ class HModel:
     @property
     def projection(self):  # , m: 'n_e', y: "n_y", p: "n_p"):
 
+        # TODO:
+        # behaves in a very misleading way if wrong number of argument is supplied
+        #  if no aggregate states, projection(m,x) (instead of projection(m,x,p)) returns zeros
+
         if self.__projection__ is None:
             if self.features["with-aggregate-states"]:
                 arguments_ = {
@@ -280,9 +284,9 @@ class HModel:
 
         if (self.__transition__ is None) and self.features["with-aggregate-states"]:
             arguments_ = {
+                "m_m1": [(e, -1) for e in self.symbols["exogenous"]],
                 "S_m1": [(e, -1) for e in self.symbols["states"]],
                 "X_m1": [(e, -1) for e in self.symbols["aggregate"]],
-                "m_m1": [(e, -1) for e in self.symbols["exogenous"]],
                 "m": [(e, 0) for e in self.symbols["exogenous"]],
                 "p": self.symbols["parameters"],
             }
@@ -418,7 +422,7 @@ class HModel:
         if self.features["with-aggregate-states"]:
             res = sum(
                 [
-                    μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, X0, S0, m0, X0, S0, p)
+                    μ0[i, :] @ ℰ(mi[i, :], s, xx0[i, :, :], m0, S0, X0, m0, S0, X0, p)
                     for i in range(xx0.shape[0])
                 ]
             )

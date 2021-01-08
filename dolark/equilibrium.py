@@ -58,18 +58,18 @@ class Equilibrium:
         return df
 
 
-def transition(
+def transition_residual(
     hmodel,
     m0: "vector",
-    X0: "vector",
     S0: "vector",
+    X0: "vector",
     p=None,
 ):
 
     if hmodel.features["with-aggregate-states"]:
         if p is None:
             p = hmodel.calibration["parameters"]
-        return S0 - hmodel.𝒢(S0, X0, m0, m0, p)
+        return S0 - hmodel.𝒢(m0, S0, X0, m0, p)
     else:
         raise Exception(
             "The considered model does not include any valid aggregate transition equation."
@@ -79,8 +79,8 @@ def transition(
 def equilibrium(
     hmodel,
     m0: "vector",
-    X0: "vector",
     S0=None,
+    X0: "vector"=None,
     p=None,
     dr0=None,
     grids=None,
@@ -94,6 +94,7 @@ def equilibrium(
         q0 = hmodel.projection(m0, X0, p)
     else:
         q0 = hmodel.projection(m0, S0, X0, p)
+
 
     dp = inject_process(q0, hmodel.model.exogenous)
 
@@ -132,7 +133,7 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
 
     if dr0 is None:
         if verbose:
-            print("Computing Initial Initial Rule... ", end="")
+            print("Computing Initial Rule... ", end="")
         dr0 = hmodel.get_starting_rule()
         if verbose:
             print(colored("done", "green"))
@@ -149,6 +150,7 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
 
     if hmodel.features["with-aggregate-states"]:
         S0 = hmodel.calibration["states"]
+        n_S = len(S0)
         n_X = len(X0)
 
         def fun(u):
@@ -156,15 +158,15 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
             for w, kwargs in dist:
                 hmodel.model.set_calibration(**kwargs)
                 res_X += w * equilibrium(
-                    hmodel, m0, u[:n_X], S0=u[n_X:], dr0=dr0, return_equilibrium=False
+                    hmodel, m0, S0=u[:n_S], X0=u[n_S:], dr0=dr0, return_equilibrium=False
                 )
-            res_S = transition(hmodel, m0, u[:n_X], u[n_X:])
-            res = np.concatenate((res_X, res_S))
+            res_S = transition_residual(hmodel, m0, u[:n_S], u[n_S:])
+            res = np.concatenate((res_S, res_X))
             if verbose=='full':
                 print(f"Value at {u} | {res}")
             return res
 
-        Y0 = np.concatenate((X0, S0))
+        Y0 = np.concatenate((S0, X0))
         if return_fun:
             return (fun, Y0)
 
@@ -175,7 +177,7 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
             res = X0 * 0
             for w, kwargs in dist:
                 hmodel.model.set_calibration(**kwargs)
-                res += w * equilibrium(hmodel, m0, u, dr0=dr0, return_equilibrium=False)
+                res += w * equilibrium(hmodel, m0, X0=u, dr0=dr0, return_equilibrium=False)
             if verbose=='full':
                 print(f"Value at {u} | {res}")
             return res
@@ -204,10 +206,10 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
             (res_ss, sol_ss, μ_ss, Π_ss) = equilibrium(
                 hmodel,
                 m_ss,
-                Y_ss[:n_X],
+                X0=Y_ss[n_S:],
                 p=p,
                 dr0=dr0,
-                S0=Y_ss[n_X:],
+                S0=Y_ss[:n_S],
                 return_equilibrium=True,
             )
             μ_ss = μ_ss.data
@@ -216,7 +218,7 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
                 [
                     w,
                     Equilibrium(
-                        hmodel, m_ss, μ_ss, sol_ss.dr, Y_ss[:n_X], S=Y_ss[n_X:]
+                        hmodel, m_ss, μ_ss, sol_ss.dr, Y_ss[:n_S], S=Y_ss[:n_S]
                     ),
                 ]
             )
