@@ -24,14 +24,27 @@ def G(hmodel, equilibrium, states_p, controls_p, p):
     μ_ss = eq.μ
     x_ss = eq.x
     y_ss = eq.y
+    S_ss = eq.S
 
-    m0, μ0 = unpack(states_p, (m_ss, μ_ss))
+    if hmodel.features['with-aggregate-states']:
+        m0, μ0, S0 = unpack(states_p, (m_ss, μ_ss, S_ss))
+    else:
+        m0, μ0 = unpack(states_p, (m_ss, μ_ss))
+
     x0, y0 = unpack(controls_p, (x_ss, y_ss))
 
-    q0 = hmodel.projection(m0, y0, p)
+    X0 = y0 # TODO: unmessify
+
+    if hmodel.features['with-aggregate-states']:
+        q0 = hmodel.projection(m0, S0, y0, p)
+    else:
+        q0 = hmodel.projection(m0, y0, p)
+
     exogenous = copy.deepcopy(hmodel.model.exogenous)
     exogenous.processes[0].μ = q0
-    mc = exogenous.discretize(to="mc", options=[{}, hmodel.discretization_options])
+    # TODO: revisit this
+    # mc = exogenous.discretize(to="mc", options=[{}, hmodel.discretization_options])
+    mc = exogenous.discretize(to="mc")
     # that should actually depend on m1
 
     dr0 = copy.deepcopy(eq.dr)
@@ -48,7 +61,11 @@ def G(hmodel, equilibrium, states_p, controls_p, p):
     m1 = hmodel.τ(m0, p)
     μ1 = μ0 @ Π0
 
-    return pack([m1, μ1])
+    if hmodel.features['with-aggregate-states']:
+        S1 = hmodel.𝒢(m0, S0, X0, m0, p)
+
+
+    return pack([m1, μ1, S1])
 
 
 def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
@@ -59,14 +76,22 @@ def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
     x_ss = eq.x
     y_ss = eq.y
 
-    m0, μ0 = unpack(states, (m_ss, μ_ss))
+    if hmodel.features['with-aggregate-states']:
+        m0, μ0, S0 = unpack(states, (m_ss, μ_ss, eq.S))
+        m1, μ1, S1 = unpack(states_f, (m_ss, μ_ss, eq.S))
+    else:
+        m0, μ0 = unpack(states, (m_ss, μ_ss))
+        m1, μ1 = unpack(states_f, (m_ss, μ_ss))
+
     x0, y0 = unpack(controls, (x_ss, y_ss))
-    m1, μ1 = unpack(states_f, (m_ss, μ_ss))
     x1, y1 = unpack(controls_f, (x_ss, y_ss))
 
-    q0 = hmodel.projection(m0, y0, p)
-
-    q1 = hmodel.projection(m1, y1, p)
+    if hmodel.features['with-aggregate-states']:
+        q0 = hmodel.projection(m0, S0, y0, p)
+        q1 = hmodel.projection(m1, S1, y1, p)
+    else:
+        q0 = hmodel.projection(m0, y0, p)
+        q1 = hmodel.projection(m1, y1, p)
 
     exogenous = copy.deepcopy(hmodel.model.exogenous)
     _mc = exogenous.processes[1].discretize(to="mc", **hmodel.discretization_options)
@@ -86,7 +111,20 @@ def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
 
     grids = dr0.exo_grid, dr0.endo_grid
 
-    aggres_0 = hmodel.𝒜(grids, m0, μ0, xx0, y0, p)
+    # m0: "n_e",
+    # μ0: "n_m.N",
+    # xx0: "n_m.N.n_x",
+    # X0: "n_X",
+    # m1: "n_e",
+    # X1: "n_X",
+    # p: "n_p",
+    # S0=None,
+    # S1=None
+
+    if hmodel.features['with-aggregate-states']:
+        aggres_0 = hmodel.𝒜(grids, m0, μ0, xx0, y0, m1, y1, p, S0=S0, S1=S1)
+    else:
+        aggres_0 = hmodel.𝒜(grids, m0, μ0, xx0, y0, m1, y1, p)
 
     return pack([res_0, aggres_0])
 
@@ -94,8 +132,12 @@ def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
 def get_derivatives(hmodel, eq):
 
     p = hmodel.calibration["parameters"]
+
     states_ss = eq.states
     controls_ss = eq.controls
+
+    test_1 = G(hmodel, eq, states_ss, controls_ss, p)
+    test_2 = F(hmodel, eq, states_ss, controls_ss, states_ss, controls_ss, p)
 
     g_s = jacobian(lambda u: G(hmodel, eq, u, controls_ss, p), states_ss)
     g_x = jacobian(lambda u: G(hmodel, eq, states_ss, u, p), controls_ss)

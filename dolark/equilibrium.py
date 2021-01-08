@@ -9,6 +9,7 @@ from .shocks import discretize_idiosyncratic_shocks
 
 
 class Equilibrium:
+
     def __init__(self, aggmodel, m, μ, dr, X, S=None):
         self.m = m
         self.μ = μ
@@ -27,9 +28,17 @@ class Equilibrium:
         self.S = S
         self.c = dr.coefficients
 
-        self.states = np.concatenate([e.ravel() for e in (m, μ)])
         self.controls = np.concatenate([e.ravel() for e in (self.x, X)])
+        if aggmodel.features['with-aggregate-states']:
+            self.states = np.concatenate([e.ravel() for e in (m, μ, S)])
+        else:
+            self.states = np.concatenate([e.ravel() for e in (m, μ)])
         self.aggmodel = aggmodel
+
+    # backward compatibility
+    @property
+    def y(self):
+        return self.X
 
     def as_df(self):
         model = self.aggmodel.model
