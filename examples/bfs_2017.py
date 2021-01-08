@@ -71,11 +71,6 @@ plt.grid(True)
 
 
 
-
-# %%
-
-eq.m
-# plt.plot( eq.μ.ravel() )
-
-
+from dolark.perturbation import perturb
+sol = perturb(hmodel, eqs)
 # %%

@@ -226,7 +226,7 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
         for w, kwargs in dist:
             hmodel.model.set_calibration(**kwargs)
             (res_ss, sol_ss, μ_ss, Π_ss) = equilibrium(
-                hmodel, m_ss, Y_ss, p=p, dr0=dr0, return_equilibrium=True
+                hmodel, m_ss, X0=Y_ss, p=p, dr0=dr0, return_equilibrium=True
             )
             μ_ss = μ_ss.data
             dr_ss = sol_ss.dr
