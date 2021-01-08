@@ -98,7 +98,8 @@ name: Caroll
 
 symbols:
     exogenous: [Z, Ψ, Ξ]
-    aggregate: [K]
+    states: [K]
+    aggregate: [i]
     parameters: [α, δ, YK, L, l, ʊbar]
 
 calibration:
@@ -106,6 +107,8 @@ calibration:
     δ: 0.025
     # YK: 10.26
     K: 80
+
+    i: K*δ
     L: 1
     l: 1/0.9
     Z: 1.0
@@ -119,6 +122,8 @@ projection: |
     r[t] = α*Z[t]*(l*L/K[t])^(1-α)
     ʊ[t] = ʊbar
 
+transition: |
+    K[t] = K[t-1]*(1-δ) + i[t-1]
 
 equilibrium: |
-    K[t] = (m[t]-c[t])/δ
+    i[t] = (m[t]-c[t])
