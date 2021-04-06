@@ -63,9 +63,11 @@ def G(hmodel, equilibrium, states_p, controls_p, p):
 
     if hmodel.features['with-aggregate-states']:
         S1 = hmodel.𝒢(m0, S0, X0, m0, p)
+        return pack([m1, μ1, S1])
+    else:
+        return pack([m1, μ1])
 
 
-    return pack([m1, μ1, S1])
 
 
 def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
