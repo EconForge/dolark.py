@@ -29,10 +29,11 @@ class Equilibrium:
         self.c = dr.coefficients
 
         self.controls = np.concatenate([e.ravel() for e in (self.x, X)])
+        # states contain only endogenous states
         if aggmodel.features['with-aggregate-states']:
-            self.states = np.concatenate([e.ravel() for e in (m, μ, S)])
+            self.states = np.concatenate([e.ravel() for e in (μ, S)])
         else:
-            self.states = np.concatenate([e.ravel() for e in (m, μ)])
+            self.states = np.concatenate([e.ravel() for e in (μ)])
         self.aggmodel = aggmodel
 
     # backward compatibility

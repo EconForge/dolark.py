@@ -17,7 +17,7 @@ import tqdm
 from .dolo_improvements import TrickyMarkovChain
 
 
-def G(hmodel, equilibrium, states_p, controls_p, p):
+def G(hmodel, equilibrium, exo_p, states_p, controls_p, exo, p):
 
     eq = equilibrium
     m_ss = eq.m
@@ -26,10 +26,13 @@ def G(hmodel, equilibrium, states_p, controls_p, p):
     y_ss = eq.y
     S_ss = eq.S
 
+    m0 = exo_p
+    m1 = exo
+
     if hmodel.features['with-aggregate-states']:
-        m0, μ0, S0 = unpack(states_p, (m_ss, μ_ss, S_ss))
+        μ0, S0 = unpack(states_p, (μ_ss, S_ss))
     else:
-        m0, μ0 = unpack(states_p, (m_ss, μ_ss))
+        μ0 = unpack(states_p, (m_ss, μ_ss))
 
     x0, y0 = unpack(controls_p, (x_ss, y_ss))
 
@@ -37,15 +40,15 @@ def G(hmodel, equilibrium, states_p, controls_p, p):
 
     if hmodel.features['with-aggregate-states']:
         q0 = hmodel.projection(m0, S0, y0, p)
+        q1 = hmodel.projection(m1, S0, y0, p) # does it make sense?
     else:
         q0 = hmodel.projection(m0, y0, p)
+        q1 = hmodel.projection(m1, y0, p)
 
     exogenous = copy.deepcopy(hmodel.model.exogenous)
-    exogenous.processes[0].μ = q0
-    # TODO: revisit this
-    # mc = exogenous.discretize(to="mc", options=[{}, hmodel.discretization_options])
-    mc = exogenous.discretize(to="mc")
-    # that should actually depend on m1
+    _mc = exogenous.processes[1].discretize(to="mc", **hmodel.discretization_options)
+
+    mc = TrickyMarkovChain(q0, q1, _mc)
 
     dr0 = copy.deepcopy(eq.dr)
     dr0.set_values(x0)
@@ -58,19 +61,19 @@ def G(hmodel, equilibrium, states_p, controls_p, p):
     k = len(μ0)
     Π0 = Π0.reshape((k, k))
 
-    m1 = hmodel.τ(m0, p)
+    # m1 = hmodel.τ(m0, p)
     μ1 = μ0 @ Π0
 
     if hmodel.features['with-aggregate-states']:
-        S1 = hmodel.𝒢(m0, S0, X0, m0, p)
-        return pack([m1, μ1, S1])
+        S1 = hmodel.𝒢(m0, S0, X0, m1, p)
+        return pack([μ1, S1])
     else:
-        return pack([m1, μ1])
+        return pack([μ1])
 
 
 
 
-def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
+def F(hmodel, equilibrium, m, states, controls, m_f, states_f, controls_f, p):
 
     eq = equilibrium
     m_ss = eq.m
@@ -78,12 +81,15 @@ def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
     x_ss = eq.x
     y_ss = eq.y
 
+    m0 = m
+    m1 = m_f
+
     if hmodel.features['with-aggregate-states']:
-        m0, μ0, S0 = unpack(states, (m_ss, μ_ss, eq.S))
-        m1, μ1, S1 = unpack(states_f, (m_ss, μ_ss, eq.S))
+        μ0, S0 = unpack(states, (μ_ss, eq.S))
+        μ1, S1 = unpack(states_f, (μ_ss, eq.S))
     else:
-        m0, μ0 = unpack(states, (m_ss, μ_ss))
-        m1, μ1 = unpack(states_f, (m_ss, μ_ss))
+        μ0 = unpack(states, (μ_ss,))
+        μ1 = unpack(states_f, (μ_ss,))
 
     x0, y0 = unpack(controls, (x_ss, y_ss))
     x1, y1 = unpack(controls_f, (x_ss, y_ss))
@@ -133,114 +139,212 @@ def F(hmodel, equilibrium, states, controls, states_f, controls_f, p):
 
 def get_derivatives(hmodel, eq):
 
+    s = eq.states
+    x = eq.controls
+    m = eq.m
     p = hmodel.calibration["parameters"]
 
-    states_ss = eq.states
-    controls_ss = eq.controls
+    # test_1 = G(hmodel, eq, states_ss, controls_ss, p)
+    # test_2 = F(hmodel, eq, states_ss, controls_ss, states_ss, controls_ss, p)
 
-    test_1 = G(hmodel, eq, states_ss, controls_ss, p)
-    test_2 = F(hmodel, eq, states_ss, controls_ss, states_ss, controls_ss, p)
 
-    g_s = jacobian(lambda u: G(hmodel, eq, u, controls_ss, p), states_ss)
-    g_x = jacobian(lambda u: G(hmodel, eq, states_ss, u, p), controls_ss)
-    g_e = np.zeros((g_s.shape[0], 1))
-    f_s = jacobian(
-        lambda u: F(hmodel, eq, u, controls_ss, states_ss, controls_ss, p), states_ss
-    )
-    f_x = jacobian(
-        lambda u: F(hmodel, eq, states_ss, u, states_ss, controls_ss, p), controls_ss
-    )
-    f_S = jacobian(
-        lambda u: F(hmodel, eq, states_ss, controls_ss, u, controls_ss, p), states_ss
-    )
-    f_X = jacobian(
-        lambda u: F(hmodel, eq, states_ss, controls_ss, states_ss, u, p), controls_ss
-    )
+    # TODO: generalize
+    h_m = hmodel.exogenous.ρ
 
-    return g_s, g_x, g_e, f_s, f_x, f_S, f_X
+    g_m = jacobian(lambda u: G(hmodel, eq, u, s, x, m, p), m)
+    g_s = jacobian(lambda u: G(hmodel, eq, m, u, x, m, p), s)
+    g_x = jacobian(lambda u: G(hmodel, eq, m, s, u, m, p), x)
+    g_M = jacobian(lambda u: G(hmodel, eq, m, s, x, u, p), m)
 
+    f_m = jacobian( lambda u: F(hmodel, eq, u, s, x, m, s, x, p), m )
+    f_s = jacobian( lambda u: F(hmodel, eq, m, u, x, m, s, x, p), s )
+    f_x = jacobian( lambda u: F(hmodel, eq, m, s, u, m, s, x, p), x )
+    f_M = jacobian( lambda u: F(hmodel, eq, m, s, x, u, s, x, p), m )
+    f_S = jacobian( lambda u: F(hmodel, eq, m, s, x, m, u, x, p), s )
+    f_X = jacobian( lambda u: F(hmodel, eq, m, s, x, m, s, u, p), x )
+
+    return FirstOrderModel(h_m, g_m, g_s, g_x, g_M, f_m, f_s, f_x, f_M, f_S, f_X)
+
+
+from dataclasses import dataclass
+
+class Matrix:
+    pass
+
+@dataclass
+class FirstOrderModel:
+    h_m: Matrix
+    g_m: Matrix
+    g_s: Matrix
+    g_x: Matrix
+    g_M: Matrix
+    f_m: Matrix
+    f_s: Matrix
+    f_x: Matrix
+    f_M: Matrix
+    f_S: Matrix
+    f_X: Matrix
+
+
+def solve_fom(fom:FirstOrderModel):
+    
+    from dolo.algos.perturbation import approximate_1st_order
+
+    g_m = fom.g_m + fom.g_M*fom.h_m
+    g_s = fom.g_s
+    g_x = fom.g_x
+    g_e = fom.g_M
+    f_m = fom.f_m
+    f_s = fom.f_s
+    f_x = fom.f_x
+    f_M = fom.f_M
+    f_S = fom.f_S
+    f_X = fom.f_X
+    
+    n_s = g_s.shape[1]
+    n_x = g_x.shape[1]
+    n_m = g_m.shape[1]
+    
+    I = lambda p: np.eye(p)
+    Z = lambda p,q: np.zeros((p,q))
+    
+    # now we express the system with (m,s) as endogenous states
+    G_s = np.row_stack([
+        np.column_stack([ fom.h_m, Z(n_m, n_s)  ]),
+        np.column_stack([ g_m, g_s  ])
+    ])
+    
+    G_x = np.row_stack([
+        Z(n_m, n_x),
+        g_x
+    ])
+    
+    G_e = np.row_stack([
+        I(n_m),
+        Z(n_s, n_m)
+    ])
+    
+    F_s = np.column_stack([f_m, f_s])
+    F_x = f_x
+    F_S = np.column_stack([f_M, f_S])
+    F_X = f_X
+    
+    C, evs = approximate_1st_order(G_s, G_x, G_e, F_s, F_x, F_S, F_X)
+    
+    return C[:,:n_m], C[:,n_m:], evs
 
 def perturb(hmodel, eq, verbose=True, return_system=False):
 
-    from dolo.algos.perturbation import approximate_1st_order
 
+    # get first order model
     if verbose:
         print("Computing Jacobian...", end="")
-    g_s, g_x, g_e, f_s, f_x, f_S, f_X = get_derivatives(hmodel, eq)
-    if return_system:
-        return g_s, g_x, g_e, f_s, f_x, f_S, f_X
+    fom = get_derivatives(hmodel, eq)
     if verbose:
         print(colored("done", "green"))
     if verbose:
         print("Solving Perturbation...", end="")
-    C0, evs = approximate_1st_order(g_s, g_x, g_e, f_s, f_x, f_S, f_X)
+    
+    C_m, C_s, evs = solve_fom(fom)
+
     if verbose:
         print(colored("done", "green"))
-    C = C0
-    P = g_s + g_x @ C0
-
-    return PerturbedEquilibrium(eq, C, P, evs)
+    
+    return PerturbedEquilibrium(eq, fom, C_m, C_s, evs)
 
 
 class PerturbedEquilibrium:
-    def __init__(hmodel, eq, C, P, evs):
-        hmodel.eq = eq
-        hmodel.C = C
-        hmodel.P = P
-        hmodel.evs = evs
 
-    def response(peq, m0, T=200):
+    def __init__(self, eq, fom, C_m, C_s, evs):
 
-        eq = peq.eq
+        self.fom = fom
+        self.eq = eq
+        self.C_m = C_m
+        self.C_s = C_s
+        self.evs = evs
 
-        m0 = np.array(m0)
-        C = peq.C
-        P = peq.P
-        n_s = eq.states.shape[0]
-        n_x = eq.controls.shape[0]
-        svec = np.zeros((T + 1, n_s))
-        xvec = np.zeros((T + 1, n_x))
-        s0 = pack([m0, eq.μ * 0])
-        svec[0, :] = s0
-        for t in range(T):
-            svec[t + 1, :] = P @ svec[t, :]
-        for t in range(T + 1):
-            xvec[t, :] = C @ svec[t, :]
-        svec[:, :] += eq.states[None, :]
-        xvec[:, :] += eq.controls[None, :]
-        # not clear what object to return here:
-        vec = np.concatenate([svec, xvec], axis=1)
-        return [unpack(vec[t, :], [eq.m, eq.μ, eq.x, eq.y]) for t in range(T + 1)]
+    # def response(peq, m0, T=200):
 
-    def simul(hmodel, dz):
+    #     eq = peq.eq
 
-        C = hmodel.C
-        P = hmodel.P
-        m_ss = hmodel.eq.m
-        μ_ss = hmodel.eq.μ
-        x_ss = hmodel.eq.x
-        y_ss = hmodel.eq.y
+    #     m0 = np.array(m0)
+    #     C = peq.C
+    #     P = peq.P
+    #     n_s = eq.states.shape[0]
+    #     n_x = eq.controls.shape[0]
+    #     svec = np.zeros((T + 1, n_s))
+    #     xvec = np.zeros((T + 1, n_x))
+    #     s0 = pack([m0, eq.μ * 0])
+    #     svec[0, :] = s0
+    #     for t in range(T):
+    #         svec[t + 1, :] = P @ svec[t, :]
+    #     for t in range(T + 1):
+    #         xvec[t, :] = C @ svec[t, :]
+    #     svec[:, :] += eq.states[None, :]
+    #     xvec[:, :] += eq.controls[None, :]
+    #     # not clear what object to return here:
+    #     vec = np.concatenate([svec, xvec], axis=1)
+    #     return [unpack(vec[t, :], [eq.m, eq.μ, eq.x, eq.y]) for t in range(T + 1)]
 
-        states_ss = hmodel.eq.states
-        controls_ss = hmodel.eq.controls
+    # def simul(hmodel, dz):
 
-        sim = []
-        λ = dz
-        St = states_ss.copy()
-        St[0] += λ
+    def simulate(self, T, m0=None, s0=None, stochastic=True):
 
-        for i in range(100):
+        import xarray
 
-            Xt = controls_ss + C @ (St - states_ss)
+        hmodel = self.eq.aggmodel
+            
+        C_m = self.C_m
+        C_s = self.C_s
 
-            mt, μt = unpack(St, (m_ss, μ_ss))
-            xt, yt = unpack(Xt, (x_ss, y_ss))
+        n_m = self.fom.g_m.shape[1]  # exogenous states
+        n_s = self.fom.g_s.shape[1]  # endogenous states
+        n_x = self.fom.g_x.shape[1]
+        
+        g_m = self.fom.g_m
+        g_s = self.fom.g_s
+        g_x = self.fom.g_x
+        g_M = self.fom.g_M
+        
+        m_sim = hmodel.exogenous.simulate(1, m0=m0, T=T+1, stochastic=stochastic)
+        m_sim = m_sim[:,0,:]
+        
+        s_sim = np.zeros( (T+1, n_s) )
+        x_sim = np.zeros( (T+1, n_x) )
+        
+    #     self.g_m+ self.g_x@C_m
+    #     self.g_m + self.g_x@C_m
+        
+        if s0 is not None:
+            raise Exception("Not implemented yet.")
+    #         s_sim[0,:] = 
 
-            St = states_ss + P @ (St - states_ss)
+        x_sim[0,:] = C_m@m_sim[0,:] + C_s@s_sim[0,:]
 
-            sim.append((mt, μt, xt, yt))
+        for t in range(1,T):
+            s_sim[t,:] = g_m@m_sim[t-1,:] + g_s@s_sim[t-1,:] + g_x@x_sim[t-1,:] + g_M@m_sim[t,:]
+            x_sim[t,:] = C_m@m_sim[t,:] + C_s@s_sim[t,:]
+            
+        # add steady-state
+        
+        m_sim = m_sim[:,:] + self.eq.m[None,:]
+        s_sim = s_sim[:,:] + self.eq.states[None,:]
+        x_sim = x_sim[:,:] + self.eq.controls[None,:]
+        
+        m_sim = xarray.DataArray(m_sim,coords=[('T', [*range(0,T+1)]), ('V', hmodel.symbols['exogenous'])])
+        sn = [f'_x_{i}' for i in range(n_s)]
+        x_sim = xarray.DataArray(x_sim,coords=[('T', [*range(0,T+1)]), ('V', sn)] )
 
-        return sim
+        if hmodel.features['with-aggregate-states']:
+            aggstates = hmodel.symbols['aggregate']
+            sn = [f'_μ_{i}' for i in range(n_s-len(aggstates))] + aggstates
+        else:
+            sn = [f'_μ_{i}' for i in range(n_s)]
+        
+        s_sim = xarray.DataArray(s_sim,coords=[('T', [*range(0,T+1)]), ('V', sn)])
 
-
-#%%
+        return xarray.concat([m_sim, s_sim, x_sim], dim='V')
+        
+        
+        
+        
