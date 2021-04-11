@@ -32,7 +32,7 @@ def G(hmodel, equilibrium, exo_p, states_p, controls_p, exo, p):
     if hmodel.features['with-aggregate-states']:
         μ0, S0 = unpack(states_p, (μ_ss, S_ss))
     else:
-        μ0 = unpack(states_p, (m_ss, μ_ss))
+        μ0, = unpack(states_p, (μ_ss,))
 
     x0, y0 = unpack(controls_p, (x_ss, y_ss))
 
@@ -88,8 +88,8 @@ def F(hmodel, equilibrium, m, states, controls, m_f, states_f, controls_f, p):
         μ0, S0 = unpack(states, (μ_ss, eq.S))
         μ1, S1 = unpack(states_f, (μ_ss, eq.S))
     else:
-        μ0 = unpack(states, (μ_ss,))
-        μ1 = unpack(states_f, (μ_ss,))
+        μ0, = unpack(states, (μ_ss,))
+        μ1, = unpack(states_f, (μ_ss,))
 
     x0, y0 = unpack(controls, (x_ss, y_ss))
     x1, y1 = unpack(controls_f, (x_ss, y_ss))
@@ -144,11 +144,10 @@ def get_derivatives(hmodel, eq):
     m = eq.m
     p = hmodel.calibration["parameters"]
 
-    # test_1 = G(hmodel, eq, states_ss, controls_ss, p)
-    # test_2 = F(hmodel, eq, states_ss, controls_ss, states_ss, controls_ss, p)
+    test1 = G(hmodel, eq, m, s, x, m, p)
+    test2 = F(hmodel, eq, m, s, x, m, s, x, p)
 
-
-    # TODO: generalize
+    # TODO: generalize this part
     h_m = hmodel.exogenous.ρ
 
     g_m = jacobian(lambda u: G(hmodel, eq, u, s, x, m, p), m)
@@ -173,6 +172,13 @@ class Matrix:
 
 @dataclass
 class FirstOrderModel:
+
+    # this represents a model:
+    # 
+    # exogenous:  m_t = h(m_{t-1}) + \epsilon_t
+    # endogenous: s_t = g(m_{t-1}, s_{t-1}, x_{t-1}, m_t, s_t, x_t)
+    # arbitrage:  f(m_t, s_t, x_t, m_{t+1}, s_{t+1}, x_{t+1})
+
     h_m: Matrix
     g_m: Matrix
     g_s: Matrix
@@ -263,30 +269,8 @@ class PerturbedEquilibrium:
         self.C_s = C_s
         self.evs = evs
 
-    # def response(peq, m0, T=200):
-
-    #     eq = peq.eq
-
-    #     m0 = np.array(m0)
-    #     C = peq.C
-    #     P = peq.P
-    #     n_s = eq.states.shape[0]
-    #     n_x = eq.controls.shape[0]
-    #     svec = np.zeros((T + 1, n_s))
-    #     xvec = np.zeros((T + 1, n_x))
-    #     s0 = pack([m0, eq.μ * 0])
-    #     svec[0, :] = s0
-    #     for t in range(T):
-    #         svec[t + 1, :] = P @ svec[t, :]
-    #     for t in range(T + 1):
-    #         xvec[t, :] = C @ svec[t, :]
-    #     svec[:, :] += eq.states[None, :]
-    #     xvec[:, :] += eq.controls[None, :]
-    #     # not clear what object to return here:
-    #     vec = np.concatenate([svec, xvec], axis=1)
-    #     return [unpack(vec[t, :], [eq.m, eq.μ, eq.x, eq.y]) for t in range(T + 1)]
-
-    # def simul(hmodel, dz):
+    def response(self, T, m0=None):
+        return self.simulate(T, m0=m0, stochastic=True)
 
     def simulate(self, T, m0=None, s0=None, stochastic=True):
 
@@ -312,9 +296,6 @@ class PerturbedEquilibrium:
         s_sim = np.zeros( (T+1, n_s) )
         x_sim = np.zeros( (T+1, n_x) )
         
-    #     self.g_m+ self.g_x@C_m
-    #     self.g_m + self.g_x@C_m
-        
         if s0 is not None:
             raise Exception("Not implemented yet.")
     #         s_sim[0,:] = 
@@ -332,11 +313,12 @@ class PerturbedEquilibrium:
         x_sim = x_sim[:,:] + self.eq.controls[None,:]
         
         m_sim = xarray.DataArray(m_sim,coords=[('T', [*range(0,T+1)]), ('V', hmodel.symbols['exogenous'])])
-        sn = [f'_x_{i}' for i in range(n_s)]
+        aggvars = hmodel.symbols['aggregate']
+        sn = [f'_x_{i}' for i in range(n_x-len(aggvars))] + aggvars
         x_sim = xarray.DataArray(x_sim,coords=[('T', [*range(0,T+1)]), ('V', sn)] )
 
         if hmodel.features['with-aggregate-states']:
-            aggstates = hmodel.symbols['aggregate']
+            aggstates = hmodel.symbols['states']
             sn = [f'_μ_{i}' for i in range(n_s-len(aggstates))] + aggstates
         else:
             sn = [f'_μ_{i}' for i in range(n_s)]
@@ -344,7 +326,3 @@ class PerturbedEquilibrium:
         s_sim = xarray.DataArray(s_sim,coords=[('T', [*range(0,T+1)]), ('V', sn)])
 
         return xarray.concat([m_sim, s_sim, x_sim], dim='V')
-        
-        
-        
-        
