@@ -43,8 +43,7 @@ jobs:
         with:
           file: ./coverage.xml
           flags: unittests
-<<<<<<< HEAD
-=======
+      
       # - name: Code Quality
       #   run: poetry run black . --check
 
@@ -53,6 +52,3 @@ jobs:
 
       - name: Test with pytest
         run: poetry run pytest
->>>>>>> 38bda6f09f77611f0b6b743ae8bf7ee738ace9af
-=======
->>>>>>> master
