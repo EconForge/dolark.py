@@ -1,4 +1,4 @@
-Read the [documentation](https://EconForge.github.io/dolark/)
+Read the [documentation](https://EconForge.github.io/dolark.py/)
 
 [![codecov](https://codecov.io/gh/EconForge/dolark/branch/master/graph/badge.svg?token=93DF3RUSJ2)](https://codecov.io/gh/EconForge/dolark)
 
