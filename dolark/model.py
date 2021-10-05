@@ -407,7 +407,7 @@ class HModel:
         X1: "n_X",
         p: "n_p",
         S0=None,
-        S1=None
+        S1=None,
     ):
 
         from dolo.numeric.processes import EmptyGrid

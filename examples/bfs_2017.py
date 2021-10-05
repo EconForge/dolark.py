@@ -33,27 +33,30 @@ dr = sol.dr
 #%%
 
 from dolo.algos.ergodic import ergodic_distribution
+
 μ = ergodic_distribution(hmodel.agent, dr)[1]
 
 #%%
 
 from matplotlib import pyplot as plt
+
 plt.plot(μ.data.ravel())
 
 
 #%%
 
 from dolark.equilibrium import find_steady_state
-eqs = find_steady_state(hmodel, dr0 =dr, verbose='full', return_fun=False)
+
+eqs = find_steady_state(hmodel, dr0=dr, verbose="full", return_fun=False)
 
 
 #%%
 
-m0 = hmodel.calibration['exogenous']
-y0 = hmodel.calibration['aggregate']
-p0 = hmodel.calibration['parameters']
+m0 = hmodel.calibration["exogenous"]
+y0 = hmodel.calibration["aggregate"]
+p0 = hmodel.calibration["parameters"]
 
-(m0,y0, hmodel.projection(m0,y0,p0))
+(m0, y0, hmodel.projection(m0, y0, p0))
 
 
 # %%
@@ -70,7 +73,7 @@ plt.grid(True)
 # %%
 
 
-
 from dolark.perturbation import perturb
+
 sol = perturb(hmodel, eqs)
 # %%

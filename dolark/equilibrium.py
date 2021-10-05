@@ -9,7 +9,6 @@ from .shocks import discretize_idiosyncratic_shocks
 
 
 class Equilibrium:
-
     def __init__(self, aggmodel, m, μ, dr, X, S=None):
         self.m = m
         self.μ = μ
@@ -30,7 +29,7 @@ class Equilibrium:
 
         self.controls = np.concatenate([e.ravel() for e in (self.x, X)])
         # states contain only endogenous states
-        if aggmodel.features['with-aggregate-states']:
+        if aggmodel.features["with-aggregate-states"]:
             self.states = np.concatenate([e.ravel() for e in (μ, S)])
         else:
             self.states = np.concatenate([e.ravel() for e in (μ)])
@@ -90,7 +89,7 @@ def equilibrium(
     hmodel,
     m0: "vector",
     S0=None,
-    X0: "vector"=None,
+    X0: "vector" = None,
     p=None,
     dr0=None,
     grids=None,
@@ -104,7 +103,6 @@ def equilibrium(
         q0 = hmodel.projection(m0, X0, p)
     else:
         q0 = hmodel.projection(m0, S0, X0, p)
-
 
     dp = inject_process(q0, hmodel.model.exogenous)
 
@@ -168,11 +166,16 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
             for w, kwargs in dist:
                 hmodel.model.set_calibration(**kwargs)
                 res_X += w * equilibrium(
-                    hmodel, m0, S0=u[:n_S], X0=u[n_S:], dr0=dr0, return_equilibrium=False
+                    hmodel,
+                    m0,
+                    S0=u[:n_S],
+                    X0=u[n_S:],
+                    dr0=dr0,
+                    return_equilibrium=False,
                 )
             res_S = transition_residual(hmodel, m0, u[:n_S], u[n_S:])
             res = np.concatenate((res_S, res_X))
-            if verbose=='full':
+            if verbose == "full":
                 print(f"Value at {u} | {res}")
             return res
 
@@ -187,8 +190,10 @@ def find_steady_state(hmodel, dr0=None, verbose=True, distribs=None, return_fun=
             res = X0 * 0
             for w, kwargs in dist:
                 hmodel.model.set_calibration(**kwargs)
-                res += w * equilibrium(hmodel, m0, X0=u, dr0=dr0, return_equilibrium=False)
-            if verbose=='full':
+                res += w * equilibrium(
+                    hmodel, m0, X0=u, dr0=dr0, return_equilibrium=False
+                )
+            if verbose == "full":
                 print(f"Value at {u} | {res}")
             return res
 

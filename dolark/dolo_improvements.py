@@ -72,12 +72,13 @@ def jacobian(f, x, dx=10e-6):
     p = x.shape[0]
     jac = np.zeros((n, p))
     for j in range(p):  # through columns to allow for vector addition
-#         Dxj = abs(x[j]) * dx if x[j] != 0 else dx
-#         x_plus = np.row_stack([(xi if k != j else xi + Dxj) for k, xi in enumerate(x)])
+        #         Dxj = abs(x[j]) * dx if x[j] != 0 else dx
+        #         x_plus = np.row_stack([(xi if k != j else xi + Dxj) for k, xi in enumerate(x)])
         x_plus = x.copy()
         x_plus[j] += dx
         jac[:, j] = (f(x_plus) - f0) / dx
     return jac
+
 
 from dolo.numeric.processes import MarkovChain
 
