@@ -3,3 +3,5 @@ site*
 *.npy
 setup.py
 .venv/*
+poetry.lock
+*__pycache__*
