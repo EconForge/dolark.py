@@ -1,5 +1,30 @@
 {
     "extensions": [
-        "ms-python.python"
-    ]
+		"ms-python.python",
+		"ms-python.vscode-pylance",
+		"albop.dolo-language"
+	],
+    "settings": {
+		"python.languageServer": "Pylance",
+		"python.linting.enabled": true,
+		"python.linting.pylintEnabled": true,
+		"python.testing.pytestArgs": [
+			"dolo"
+		],
+		"python.formatting.provider": "black",
+		"editor.formatOnSave": true,
+		"python.testing.unittestEnabled": false,
+		"python.testing.pytestEnabled": true,
+		"git.ignoreLimitWarning": true
+	},
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "..",
+		"args": {
+			"VARIANT": "3.9",
+			"NODE_VERSION": "lts/*"
+		}
+	},
+	"postCreateCommand": "poetry config virtualenvs.in-project true && poetry install",
+	"remoteUser": "vscode"
 }
