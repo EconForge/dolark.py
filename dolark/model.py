@@ -467,17 +467,17 @@ class HModel:
         from dolo.misc.termcolor import colored
         from numpy import zeros
 
-        s = "Model:\n------\nname: \"{name}\"\ntype: \"{type}\"\n".format(**self.infos)
+        s = 'Model:\n------\nname: "{name}"\ntype: "{type}"\n'.format(**self.infos)
 
         s += "\nFeatures:\n----------\n"
         features = self.features
         for f in features.keys():
-                ind = features[f]
-                if ind:
-                    s += "{feature} {tick}".format(feature=f, tick=colored("✓", "green"))
-                else:
-                    s += "{feature} {tick}".format(feature=f, tick=colored("✗", "red"))
-                s += "\n"
+            ind = features[f]
+            if ind:
+                s += "{feature} {tick}".format(feature=f, tick=colored("✓", "green"))
+            else:
+                s += "{feature} {tick}".format(feature=f, tick=colored("✗", "red"))
+            s += "\n"
 
         return s
 
@@ -498,20 +498,28 @@ class HModel:
         <td>type</td>
         <td>{type}</td>
         </tr>
-        </table>""".format(**self.infos)
+        </table>""".format(
+            **self.infos
+        )
         table = '<tr><td style="text-align:center"><b>Feature</b></td><td style="text-align:center"><b>Value</b></td></tr>\n'
 
         features = self.features
         lines = []
         for f in features.keys():
-              ind = features[f]
-              if ind:
-                  lines.append("<tr><td style=\"text-align:left\">{feature}</td><td style=\"text-align:center\">{tick}</td></tr>".format(feature=f, tick="<span style=\"color: green;\">✓</span>"))
-              else:
-                  lines.append("<tr><td style=\"text-align:left\">{feature}</td><td style=\"text-align:center\">{tick}</td></tr>".format(feature=f, tick="<span style=\"color: red;\">✗</span>"))
+            ind = features[f]
+            if ind:
+                lines.append(
+                    '<tr><td style="text-align:left">{feature}</td><td style="text-align:center">{tick}</td></tr>'.format(
+                        feature=f, tick='<span style="color: green;">✓</span>'
+                    )
+                )
+            else:
+                lines.append(
+                    '<tr><td style="text-align:left">{feature}</td><td style="text-align:center">{tick}</td></tr>'.format(
+                        feature=f, tick='<span style="color: red;">✗</span>'
+                    )
+                )
         table += str.join("\n", lines)
         table = "<table>{}</table>".format(table)
-            
+
         return table_infos + table
-
-
