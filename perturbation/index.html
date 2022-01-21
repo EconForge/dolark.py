@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Perturbation - DolARK</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  <link href="../css/extra.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Perturbation";
+    var mkdocs_page_input_path = "perturbation.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> DolARK</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../model_def/">Model Definition</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../equilibrium/">Equilibrium</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Perturbation</a>
+    <ul class="current">
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../krussell_smith/">Krussell-Smith</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">DolARK</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Perturbation</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="perturbation-wrt-aggregate-state">Perturbation w.r.t. aggregate state.</h2>
+<p>Implementation restrictions:</p>
+<ul>
+<li>ex ante identical agents</li>
+<li>agents idiosyncratic shocks must be discretizable by markov chains</li>
+<li>aggregate shock is an AR1 (possibly multivariate)</li>
+</ul>
+<p>Notations (vague):</p>
+<ul>
+<li><span><span class="MathJax_Preview">m_t</span><script type="math/tex">m_t</script></span> is the aggregate exogenous shock, associated to transition function such that <span><span class="MathJax_Preview">m_t = \tau(m_{t-1}, \epsilon_t)</span><script type="math/tex">m_t = \tau(m_{t-1}, \epsilon_t)</script></span></li>
+<li><span><span class="MathJax_Preview">x_t</span><script type="math/tex">x_t</script></span> is a vector representing the values of the decision rule of all agents at date t. Denote by <span><span class="MathJax_Preview">\varphi^{x_t}()</span><script type="math/tex">\varphi^{x_t}()</script></span> the decision rule it determines. Denote by <span><span class="MathJax_Preview">T</span><script type="math/tex">T</script></span> the time iteration operator which pins down optimal decision today as a function of decisions tomorrow.</li>
+<li><span><span class="MathJax_Preview">y_t</span><script type="math/tex">y_t</script></span> is the vector of aggregate prices</li>
+<li><span><span class="MathJax_Preview">\mu_t</span><script type="math/tex">\mu_t</script></span> is a vector representing the distributions of agents across endogenous and exogenous idiosyncratic states given <span><span class="MathJax_Preview">m_t</span><script type="math/tex">m_t</script></span></li>
+<li><span><span class="MathJax_Preview">\Pi(m_t, x_t, y_t)</span><script type="math/tex">\Pi(m_t, x_t, y_t)</script></span> is the transition matrix, associated to policy <span><span class="MathJax_Preview">x_t</span><script type="math/tex">x_t</script></span> across the individual's states</li>
+</ul>
+<p>Recall the definition of the equilibrium function:</p>
+<div>
+<div class="MathJax_Preview">\int \mathcal{E}\left(e^i, s, x_t(e^i,s), y_t\right) d \mu_t(e^i,s)= 0</div>
+<script type="math/tex; mode=display">\int \mathcal{E}\left(e^i, s, x_t(e^i,s), y_t\right) d \mu_t(e^i,s)= 0</script>
+</div>
+<p>Knowing the approximate decision rule <span><span class="MathJax_Preview">\phi^{x_t}</span><script type="math/tex">\phi^{x_t}</script></span> and distribution <span><span class="MathJax_Preview">\mu_t</span><script type="math/tex">\mu_t</script></span> the above equation is naturally approximated by a function <span><span class="MathJax_Preview">\mathcal{A}</span><script type="math/tex">\mathcal{A}</script></span> such that:</p>
+<div>
+<div class="MathJax_Preview">\mathcal{A}(m_t, \mu_t, x_t, y_t) = \int \mathcal{E}\left(e^i, s, \varphi^{x_t}(e^i,s), y_t\right) d \mu_t(e^i,s)</div>
+<script type="math/tex; mode=display">\mathcal{A}(m_t, \mu_t, x_t, y_t) = \int \mathcal{E}\left(e^i, s, \varphi^{x_t}(e^i,s), y_t\right) d \mu_t(e^i,s)</script>
+</div>
+<p>The whole economy is characterized by the following equations:</p>
+<ul>
+<li>transition (<span><span class="MathJax_Preview">G</span><script type="math/tex">G</script></span>):</li>
+</ul>
+<div>
+<div class="MathJax_Preview">m_t = \tau(m_{t-1}, \eta_t)</div>
+<script type="math/tex; mode=display">m_t = \tau(m_{t-1}, \eta_t)</script>
+</div>
+<div>
+<div class="MathJax_Preview">\mu_t = \mu_{t-1}.\Pi(m_{t-1}, x_{t-1}, y_{t-1})</div>
+<script type="math/tex; mode=display">\mu_t = \mu_{t-1}.\Pi(m_{t-1}, x_{t-1}, y_{t-1})</script>
+</div>
+<ul>
+<li>equilibrium (<span><span class="MathJax_Preview">F</span><script type="math/tex">F</script></span>)</li>
+</ul>
+<div>
+<div class="MathJax_Preview">x_t = T(m_t, y_t, m_{t+1}, x_{t+1}, y_{t+1})</div>
+<script type="math/tex; mode=display">x_t = T(m_t, y_t, m_{t+1}, x_{t+1}, y_{t+1})</script>
+</div>
+<div>
+<div class="MathJax_Preview">\mathcal{A}(m_t, \mu_t, x_t, y_t)=0</div>
+<script type="math/tex; mode=display">\mathcal{A}(m_t, \mu_t, x_t, y_t)=0</script>
+</div>
+<p>Note that aggregate states (in the sense that they are predetermined) are <span><span class="MathJax_Preview">m_t</span><script type="math/tex">m_t</script></span> and <span><span class="MathJax_Preview">\mu_t</span><script type="math/tex">\mu_t</script></span> that is the aggregate shock and the distribution of agents' states. The controls are <span><span class="MathJax_Preview">x_t</span><script type="math/tex">x_t</script></span> and <span><span class="MathJax_Preview">y_t</span><script type="math/tex">y_t</script></span> that is agent's decisions and aggregate prices.</p>
+<p>For the sake of clarity, let us exemplify the notations above. Considering the Aiyagari (1994) model with aggregate productivity shocks presented in this <a href="../single_agent/#ex-ante-identical-agents">note</a> from the Model-Definition section
+- <span><span class="MathJax_Preview">s_t = a_t</span><script type="math/tex">s_t = a_t</script></span>
+- <span><span class="MathJax_Preview">x_t = i_{t}</span><script type="math/tex">x_t = i_{t}</script></span>
+- <span><span class="MathJax_Preview">y_t = \left( r_t, w_t \right)</span><script type="math/tex">y_t = \left( r_t, w_t \right)</script></span>
+- <span><span class="MathJax_Preview">e_t^i = \left(y_t,\epsilon_t^i\right)</span><script type="math/tex">e_t^i = \left(y_t,\epsilon_t^i\right)</script></span>
+- <span><span class="MathJax_Preview">m_t = z_t</span><script type="math/tex">m_t = z_t</script></span>
+- <span><span class="MathJax_Preview">\mu_t</span><script type="math/tex">\mu_t</script></span> is the joint distribution of agents over <span><span class="MathJax_Preview">s_t</span><script type="math/tex">s_t</script></span> and <span><span class="MathJax_Preview">\epsilon_t^i</span><script type="math/tex">\epsilon_t^i</script></span> given <span><span class="MathJax_Preview">m_t</span><script type="math/tex">m_t</script></span></p>
+<p>The transition equation associated with <span><span class="MathJax_Preview">\tau</span><script type="math/tex">\tau</script></span> is simply</p>
+<div>
+<div class="MathJax_Preview">\log(z_t) = \rho \log(z_{t-1}) + \sigma \eta_t, \quad \eta_t \sim \mathcal{N}(0,1)</div>
+<script type="math/tex; mode=display">\log(z_t) = \rho \log(z_{t-1}) + \sigma \eta_t, \quad \eta_t \sim \mathcal{N}(0,1)</script>
+</div>
+<p>The equilibrium equations defining <span><span class="MathJax_Preview">\mathcal{A}</span><script type="math/tex">\mathcal{A}</script></span> are
+<script type="math/tex; mode=display">
+r_t = A \alpha z_t \left( \frac{L}{K_t} \right)^{1 - \alpha} - \delta\\
+w_t = A (1-\alpha) z_t \left( \frac{L}{K_t} \right)^{\alpha}\\
+K_t = \int \phi^{x_t} \left( \epsilon_t^i, a_t \right) d\mu_t\left( a_t, \epsilon_t^i\right)
+</script>
+</p>
+<p><span><span class="MathJax_Preview">\mathcal T</span><script type="math/tex">\mathcal T</script></span> is the time-iteration operator, which solves for <span><span class="MathJax_Preview">x_t</span><script type="math/tex">x_t</script></span> in the Euler equation given <span><span class="MathJax_Preview">m_t</span><script type="math/tex">m_t</script></span>, <span><span class="MathJax_Preview">y_t</span><script type="math/tex">y_t</script></span>, <span><span class="MathJax_Preview">m_{t+1}</span><script type="math/tex">m_{t+1}</script></span> and <span><span class="MathJax_Preview">y_{t+1}</span><script type="math/tex">y_{t+1}</script></span></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../krussell_smith/" class="btn btn-neutral float-right" title="Krussell-Smith">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../equilibrium/" class="btn btn-neutral" title="Equilibrium"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../equilibrium/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../krussell_smith/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" defer></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega@5" defer></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-lite@3" defer></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-embed@5" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
