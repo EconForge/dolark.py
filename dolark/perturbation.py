@@ -107,7 +107,7 @@ def F(hmodel, equilibrium, m, states, controls, m_f, states_f, controls_f, p):
     dr1.set_values(x1)
 
     sol0 = time_iteration(hmodel.model, dr0=dr1, verbose=False, maxit=1, dprocess=tmc)
-    dr0 = sol0
+    dr0 = sol0.dr
     s = dr0.endo_grid.nodes
     n_m = _mc.n_nodes
     xx0 = np.concatenate(
